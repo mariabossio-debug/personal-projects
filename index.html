@@ -3,20 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Executive Dashboard | Consumo 2026</title>
+    <title>Executive Report | Consumo 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-body: #0f172a;       /* Slate 900 */
-            --bg-card: #1e293b;       /* Slate 800 */
-            --text-main: #f8fafc;     /* Slate 50 */
-            --text-muted: #94a3b8;    /* Slate 400 */
-            --accent-color: #38bdf8;  /* Sky 400 */
-            --danger-color: #f87171;  /* Red 400 */
-            --success-color: #4ade80; /* Green 400 */
-            --border-color: #334155;  /* Slate 700 */
+            --bg-body: #0b0f19;       /* Fondo super oscuro */
+            --bg-card: #151b2b;       /* Tarjetas ligeramente más claras */
+            --text-main: #ffffff;     /* Texto blanco puro */
+            --text-muted: #9ca3af;    /* Texto gris secundario */
+            --accent-blue: #3b82f6;   /* Azul vibrante para OKRs */
+            --accent-cyan: #06b6d4;   /* Cian para degradados */
+            --danger: #ef4444;        /* Rojo alerta */
+            --success: #10b981;       /* Verde éxito */
+            --warning: #f59e0b;       /* Amarillo precaución */
+            --border-light: #1f2937;  /* Bordes sutiles */
         }
 
         body {
@@ -25,173 +27,137 @@
             font-family: 'Inter', sans-serif;
             margin: 0;
             padding: 40px 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
+            display: flex; flex-direction: column; align-items: center;
         }
 
-        .dashboard-container {
-            width: 100%;
-            max-width: 1200px;
-        }
+        .dashboard-container { width: 100%; max-width: 1200px; }
 
-        /* HEADER */
+        /* HEADER TIPO OKR */
         .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-end;
-            margin-bottom: 40px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 40px; padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-light);
         }
-        .header h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
-        .header p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
-        .last-update { font-size: 12px; color: var(--text-muted); background: var(--bg-card); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border-color); }
+        .header h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; }
+        .header p { margin: 8px 0 0 0; color: var(--text-muted); font-size: 15px; }
+        .badge { font-size: 12px; font-weight: 600; background: #1e293b; padding: 6px 12px; border-radius: 20px; color: var(--accent-cyan); border: 1px solid #334155; }
 
-        /* KPI CARDS */
+        /* KPI CARDS REDISEÑADAS */
         .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 24px;
-            margin-bottom: 40px;
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 24px; margin-bottom: 40px;
         }
-        
         .kpi-card {
-            background: var(--bg-card);
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
-            position: relative;
-            overflow: hidden;
+            background: var(--bg-card); padding: 28px; border-radius: 16px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+            display: flex; flex-direction: column;
         }
-        .kpi-card:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-            border-color: var(--text-muted);
-        }
-        
-        /* Barrita decorativa arriba de la card */
-        .kpi-card::before {
-            content: '';
-            position: absolute;
-            top: 0; left: 0; right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, var(--accent-color), transparent);
-            opacity: 0.5;
-        }
+        .kpi-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .kpi-value { font-size: 36px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+        .kpi-subtext { font-size: 14px; margin-top: 12px; color: var(--text-muted); font-weight: 500; display: flex; align-items: center; gap: 6px; }
 
-        .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
-        .kpi-value { font-size: 32px; font-weight: 700; color: var(--text-main); letter-spacing: -1px; }
-        .kpi-subtext { font-size: 13px; margin-top: 8px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+        /* Estilos específicos para la tarjeta de Estado Completo */
+        .status-comparison { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-light); }
+        .comp-box { display: flex; flex-direction: column; }
+        .comp-label { font-size: 11px; color: var(--text-muted);text-transform: uppercase; font-weight: 600;}
+        .comp-val { font-size: 18px; font-weight: 700; margin-top: 4px; }
 
-        .text-green { color: var(--success-color); }
-        .text-red { color: var(--danger-color); }
-        .text-blue { color: var(--accent-color); }
+        .txt-green { color: var(--success); } .txt-red { color: var(--danger); } .txt-warn { color: var(--warning); } .txt-blue { color: var(--accent-blue); }
 
-        /* CHART SECTION */
+        /* GRÁFICA PROFESIONAL */
         .chart-wrapper {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 30px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-            height: 500px;
-            position: relative;
+            background: var(--bg-card); border-radius: 16px; padding: 35px;
+            border: 1px solid var(--border-light);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.3);
+            height: 500px; position: relative;
         }
-        .chart-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .chart-title { font-size: 16px; font-weight: 600; color: var(--text-main); }
-        .chart-legend { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); }
-        .legend-item { display: flex; align-items: center; gap: 6px; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
-
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 25px; }
+        .chart-title { font-size: 18px; font-weight: 600; }
     </style>
 </head>
 <body>
 
     <div class="dashboard-container">
-        
         <div class="header">
             <div>
-                <h1>Dashboard de Ejecuciones</h1>
-                <p>Reporte de consumo mensual automatizado</p>
+                <h1>Reporte de Consumo Q1</h1>
+                <p>Seguimiento de OKR: Mantener ejecuciones bajo el límite mensual.</p>
             </div>
-            <div class="last-update" id="update-time">Actualizando...</div>
+            <div class="badge" id="update-time">Actualizado hoy</div>
         </div>
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-label">Proyección Fin de Mes</div>
+                <div class="kpi-label">Proyección Cierre Mes</div>
                 <div class="kpi-value" id="kpi-proyeccion">--</div>
                 <div class="kpi-subtext">Total estimado de ejecuciones</div>
             </div>
-
             <div class="kpi-card">
-                <div class="kpi-label">Cupo Disponible</div>
+                <div class="kpi-label">Margen Disponible</div>
                 <div class="kpi-value" id="kpi-colchon">--</div>
-                <div class="kpi-subtext" id="kpi-colchon-text">Calculando margen...</div>
+                <div class="kpi-subtext" id="kpi-colchon-text">Calculando...</div>
             </div>
-
             <div class="kpi-card">
                 <div class="kpi-label">Utilización del Plan</div>
                 <div class="kpi-value" id="kpi-estado">--%</div>
-                <div class="kpi-subtext">Base 50.000 créditos</div>
+                <div class="kpi-subtext">Meta: Mantener bajo 100%</div>
             </div>
-
             <div class="kpi-card">
-                <div class="kpi-label">Estado Actual</div>
-                <div class="kpi-value" id="kpi-status-text" style="font-size: 24px;">--</div>
-                <div class="kpi-subtext">Nivel de riesgo</div>
+                <div class="kpi-label">Salud del Consumo Diario</div>
+                <div class="kpi-value" id="kpi-status-text" style="font-size: 26px;">--</div>
+                
+                <div class="status-comparison">
+                    <div class="comp-box">
+                        <span class="comp-label">Tu Promedio Real</span>
+                        <span class="comp-val" id="comp-real">--</span>
+                    </div>
+                    <div class="comp-box" style="text-align: right;">
+                        <span class="comp-label">Promedio Seguro</span>
+                        <span class="comp-val" id="comp-safe">--</span>
+                    </div>
+                </div>
             </div>
         </div>
 
         <div class="chart-wrapper">
             <div class="chart-header">
-                <div class="chart-title">Tendencia de Consumo Diario</div>
-                <div class="chart-legend">
-                    <div class="legend-item"><div class="dot" style="background: #38bdf8;"></div>Consumo Real</div>
-                    <div class="legend-item"><div class="dot" style="background: #f87171;"></div>Límite Teórico</div>
-                </div>
+                <div class="chart-title">Tendencia Diaria (Enero)</div>
             </div>
             <canvas id="mainChart"></canvas>
         </div>
-
     </div>
 
     <script>
-        // CONFIGURACIÓN
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
         const PLAN_LIMIT = 50000;
+        const DAYS_IN_MONTH = 31; // Para calcular el promedio seguro
+
+        // Helper para formatear fechas cortas (ej: "01 Ene")
+        function shortDate(longDate) {
+            try {
+                // Soporta "jueves, 1 de enero..." y "1 de enero..."
+                let parts = longDate.includes(',') ? longDate.split(',')[1].trim().split(' ') : longDate.split(' ');
+                let day = parts[0].padStart(2, '0'); // Asegura "01" en vez de "1"
+                let monthFull = parts[2].toLowerCase();
+                const monthMap = { 'enero':'Ene', 'febrero':'Feb', 'marzo':'Mar', 'abril':'Abr', 'mayo':'May', 'junio':'Jun', 'julio':'Jul', 'agosto':'Ago', 'septiembre':'Sep', 'octubre':'Oct', 'noviembre':'Nov', 'diciembre':'Dic' };
+                return `${day} ${monthMap[monthFull] || monthFull}`;
+            } catch(e) { return longDate.substring(0,5); } // Fallback
+        }
 
         async function initDashboard() {
             try {
-                // Cache Buster: Truco para forzar actualización inmediata
-                const uniqueUrl = SHEET_URL + '&t=' + new Date().getTime();
-                
-                const response = await fetch(uniqueUrl);
+                const response = await fetch(SHEET_URL + '&t=' + new Date().getTime());
                 const csvText = await response.text();
-                const results = Papa.parse(csvText, { header: false });
-                const rawData = results.data;
+                const rawData = Papa.parse(csvText, { header: false }).data;
 
-                // --- LÓGICA DE DATOS (Igual que antes, pero robusta) ---
-                let headerIndex = -1;
-                for(let i=0; i<rawData.length; i++) {
-                    if(rawData[i].join(' ').toLowerCase().includes("consumo final")) {
-                        headerIndex = i; break;
-                    }
-                }
+                // --- PROCESAMIENTO DE DATOS ---
+                let headerIndex = rawData.findIndex(row => row.join(' ').toLowerCase().includes("consumo final"));
                 if(headerIndex === -1) headerIndex = 0;
 
                 const headers = rawData[headerIndex].map(h => h.toLowerCase().trim());
-                let colFecha = headers.findIndex(h => h.includes("fecha corta"));
-                if (colFecha === -1) colFecha = headers.findIndex(h => h.includes("fecha"));
+                // Preferimos la columna "fecha" original y la formatearemos nosotros
+                const colFecha = headers.findIndex(h => h.includes("fecha") && !h.includes("corta"));
                 const colConsumo = headers.findIndex(h => h.includes("consumo final"));
 
                 const labels = [];
@@ -201,147 +167,104 @@
                 for(let i = headerIndex + 1; i < rawData.length; i++) {
                     const row = rawData[i];
                     if(row[colFecha] && row[colConsumo]) {
-                        let dateText = row[colFecha];
-                        if(dateText.includes(",")) { let p = dateText.split(","); if(p.length>1) dateText = p[1].trim(); }
+                        // Formatear fecha a corto (DD MMM)
+                        labels.push(shortDate(row[colFecha]));
                         
-                        let valStr = row[colConsumo].toString().replace(/\./g, "").replace(/,/g, "");
-                        let val = parseInt(valStr);
-
+                        // Limpiar número
+                        let val = parseInt(row[colConsumo].toString().replace(/\./g, "").replace(/,/g, ""));
                         if(!isNaN(val)) {
-                            labels.push(dateText);
                             dataPoints.push(val);
-                            monthlyTotalSum += val; // Suma acumulada real
+                            monthlyTotalSum += val;
                         }
                     }
                 }
 
-                // --- ACTUALIZAR KPIS ---
+                // --- CÁLCULOS KPI ---
                 const buffer = PLAN_LIMIT - monthlyTotalSum;
                 const percent = (monthlyTotalSum / PLAN_LIMIT) * 100;
+                const avgReal = monthlyTotalSum / DAYS_IN_MONTH;
+                const avgSafe = PLAN_LIMIT / DAYS_IN_MONTH;
 
-                // Formateador de números (pone puntos de mil)
-                const fmt = new Intl.NumberFormat('es-CO');
-
+                // --- RENDERIZADO ---
+                const fmt = new Intl.NumberFormat('es-CO', { maximumFractionDigits: 0 });
                 document.getElementById('kpi-proyeccion').innerText = fmt.format(monthlyTotalSum);
-                
+
                 const colchonEl = document.getElementById('kpi-colchon');
-                const colchonTxt = document.getElementById('kpi-colchon-text');
                 colchonEl.innerText = fmt.format(buffer);
-                
-                if(buffer > 0) {
-                    colchonEl.classList.add('text-green');
-                    colchonTxt.innerHTML = `<span class="text-green">●</span> Margen seguro`;
-                } else {
-                    colchonEl.classList.add('text-red');
-                    colchonTxt.innerHTML = `<span class="text-red">●</span> Sobrepasado`;
-                }
+                document.getElementById('kpi-colchon-text').innerHTML = buffer > 0 
+                    ? `<span class="txt-green">●</span> Margen disponible` 
+                    : `<span class="txt-red">●</span> Límite excedido`;
+                colchonEl.className = 'kpi-value ' + (buffer > 0 ? 'txt-green' : 'txt-red');
 
                 const estadoEl = document.getElementById('kpi-estado');
                 estadoEl.innerText = percent.toFixed(1) + "%";
-                if(percent > 100) estadoEl.style.color = 'var(--danger-color)';
-                else if(percent > 85) estadoEl.style.color = '#fbbf24'; // Amber
-                else estadoEl.style.color = 'var(--success-color)';
+                let statusColor = percent > 100 ? 'txt-red' : (percent > 85 ? 'txt-warn' : 'txt-green');
+                estadoEl.className = 'kpi-value ' + statusColor;
 
-                // Texto de Status
+                // KPI ESTADO COMPLETO (Nuevo)
                 const statusText = document.getElementById('kpi-status-text');
-                if(percent <= 80) { statusText.innerText = "Óptimo"; statusText.className = "kpi-value text-green"; }
-                else if(percent <= 100) { statusText.innerText = "Precaución"; statusText.className = "kpi-value text-blue"; } // Azul/Amarillo
-                else { statusText.innerText = "Crítico"; statusText.className = "kpi-value text-red"; }
+                let sTxt = "Óptimo", sClass = "txt-green";
+                if(percent > 100) { sTxt = "Crítico"; sClass = "txt-red"; }
+                else if(percent > 85) { sTxt = "Precaución"; sClass = "txt-warn"; }
+                statusText.innerText = sTxt; statusText.className = 'kpi-value ' + sClass;
 
-                document.getElementById('update-time').innerText = "Actualizado: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                document.getElementById('comp-real').innerText = fmt.format(avgReal) + "/día";
+                document.getElementById('comp-real').className = 'comp-val ' + sClass;
+                document.getElementById('comp-safe').innerText = fmt.format(avgSafe) + "/día";
+
+                document.getElementById('update-time').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
 
-                // --- RENDERIZAR GRÁFICA PREMIUM ---
+                // --- GRÁFICA EJECUTIVA ---
                 const ctx = document.getElementById('mainChart').getContext('2d');
-                
-                // Crear el degradado vertical bonito
+                // Degradado premium (Cian a Azul)
                 let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(56, 189, 248, 0.5)'); // Azul brillante arriba
-                gradient.addColorStop(1, 'rgba(15, 23, 42, 0.0)');   // Transparente abajo
+                gradient.addColorStop(0, 'rgba(6, 182, 212, 0.6)'); 
+                gradient.addColorStop(1, 'rgba(59, 130, 246, 0.05)');
 
                 new Chart(ctx, {
                     type: 'line',
                     data: {
-                        labels: labels,
-                        datasets: [
-                            {
-                                label: 'Ejecuciones',
-                                data: dataPoints,
-                                borderColor: '#38bdf8', // Cyan brillante
-                                backgroundColor: gradient,
-                                borderWidth: 3,
-                                pointRadius: 0, // Sin puntos para limpieza visual
-                                pointHoverRadius: 6,
-                                pointBackgroundColor: '#fff',
-                                fill: true,
-                                tension: 0.4 // Curva suave (Smooth)
-                            },
-                            {
-                                label: 'Límite Diario Promedio',
-                                data: Array(labels.length).fill(1612), // Ref 50k/31
-                                borderColor: '#f87171', // Rojo suave
-                                borderWidth: 2,
-                                borderDash: [6, 6], // Punteado elegante
-                                pointRadius: 0,
-                                fill: false,
-                                tension: 0
-                            }
-                        ]
+                        labels: labels, // Fechas cortas "01 Ene"
+                        datasets: [{
+                            label: 'Ejecuciones',
+                            data: dataPoints,
+                            borderColor: '#06b6d4', // Cian brillante
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointRadius: 0, // Sin puntos para limpieza
+                            pointHoverRadius: 8, pointHoverBackgroundColor: '#fff', pointHoverBorderColor: '#06b6d4', pointHoverBorderWidth: 3,
+                            fill: true,
+                            tension: 0.4 // Curva suave
+                        }]
                     },
                     options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
+                        responsive: true, maintainAspectRatio: false,
                         plugins: {
-                            legend: { display: false }, // Ocultamos la leyenda default fea
-                            tooltip: {
-                                backgroundColor: '#1e293b',
-                                titleColor: '#94a3b8',
-                                bodyColor: '#f8fafc',
-                                borderColor: '#334155',
-                                borderWidth: 1,
-                                padding: 12,
-                                displayColors: false,
-                                callbacks: {
-                                    title: (context) => context[0].label,
-                                    label: (context) => {
-                                        return context.raw.toLocaleString('es-CO') + ' ejecuciones';
-                                    }
-                                }
+                            legend: { display: false },
+                            tooltip: { // Tooltip moderno
+                                backgroundColor: 'rgba(21, 27, 43, 0.9)',
+                                titleColor: '#9ca3af', bodyColor: '#fff', titleFont: {size:11}, bodyFont: {size:16, weight:'bold'},
+                                padding: 14, cornerRadius: 10, displayColors: false,
+                                callbacks: { label: (c) => fmt.format(c.raw) }
                             }
                         },
                         scales: {
-                            x: {
-                                grid: { display: false }, // Sin cuadrícula vertical
-                                ticks: { color: '#64748b', maxTicksLimit: 10, font: {family: 'Inter'} }
+                            x: { // Eje X horizontal y limpio
+                                grid: { display: false },
+                                ticks: { color: '#64748b', font:{size:11}, maxRotation: 0, minRotation: 0, autoSkip: true, maxTicksLimit: 15 }
                             },
-                            y: {
-                                grid: { 
-                                    color: '#334155', 
-                                    borderDash: [4, 4], // Cuadrícula horizontal punteada
-                                    drawBorder: false // Sin línea de eje sólida
-                                },
-                                ticks: { 
-                                    color: '#64748b', 
-                                    font: {family: 'Inter'},
-                                    callback: function(value) {
-                                        return value >= 1000 ? (value/1000) + 'k' : value; // Formato 1k, 2k...
-                                    }
-                                },
+                            y: { // Eje Y minimalista
+                                grid: { color: '#1f2937', borderDash: [5, 5], drawBorder: false },
+                                ticks: { color: '#64748b', font:{size:11}, callback: v => v >= 1000 ? (v/1000)+'k' : v },
                                 beginAtZero: true
                             }
                         },
-                        interaction: {
-                            intersect: false,
-                            mode: 'index',
-                        }
+                        interaction: { intersect: false, mode: 'index' }
                     }
                 });
 
-            } catch (error) {
-                console.error(error);
-                document.querySelector('.header p').innerText = "Error cargando datos. Verifica el CSV.";
-                document.querySelector('.header p').style.color = "var(--danger-color)";
-            }
+            } catch (error) { console.error(error); document.querySelector('.header h1').innerText = "Error de conexión"; }
         }
 
         initDashboard();
