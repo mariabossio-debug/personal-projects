@@ -26,51 +26,73 @@
             display: flex; flex-direction: column; align-items: center;
         }
 
-        .dashboard-container { width: 100%; max-width: 1200px; }
+        .dashboard-container { width: 100%; max-width: 1250px; /* Un poco más ancho para que quepan las 2 columnas */ }
 
         /* HEADER */
         .header {
             display: flex; justify-content: space-between; align-items: flex-end;
-            margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);
+            margin-bottom: 30px; padding-bottom: 20px; border-bottom: 1px solid var(--border-light);
         }
         .header h1 { margin: 0; font-size: 32px; font-weight: 700; letter-spacing: -1px; }
         .header p { margin: 8px 0 0 0; color: var(--text-muted); font-size: 15px; }
         .badge { font-size: 12px; font-weight: 600; background: #1e293b; padding: 6px 12px; border-radius: 20px; color: var(--accent-cyan); border: 1px solid #334155; }
 
         /* KPI CARDS */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 24px; margin-bottom: 40px; }
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 24px; margin-bottom: 30px; }
         .kpi-card {
-            background: var(--bg-card); padding: 28px; border-radius: 16px;
+            background: var(--bg-card); padding: 24px; border-radius: 16px;
             border: 1px solid var(--border-light); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
             display: flex; flex-direction: column;
         }
-        .kpi-label { font-size: 13px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        .kpi-value { font-size: 36px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
-        .kpi-subtext { font-size: 14px; margin-top: 12px; color: var(--text-muted); font-weight: 500; }
+        .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .kpi-value { font-size: 32px; font-weight: 700; letter-spacing: -1.5px; line-height: 1; }
+        .kpi-subtext { font-size: 13px; margin-top: 10px; color: var(--text-muted); font-weight: 500; }
 
         .status-comparison { display: flex; justify-content: space-between; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-light); }
         .comp-box { display: flex; flex-direction: column; }
         .comp-label { font-size: 11px; color: var(--text-muted);text-transform: uppercase; font-weight: 600;}
-        .comp-val { font-size: 18px; font-weight: 700; margin-top: 4px; }
+        .comp-val { font-size: 16px; font-weight: 700; margin-top: 4px; }
 
         .txt-green { color: var(--success); } .txt-red { color: var(--danger); } .txt-warn { color: var(--warning); }
 
-        /* GRÁFICA */
-        .chart-wrapper {
-            background: var(--bg-card); border-radius: 16px; padding: 35px;
-            border: 1px solid var(--border-light); height: 450px; position: relative; margin-bottom: 40px;
+        /* --- NUEVO LAYOUT DE 2 COLUMNAS --- */
+        .main-content-grid {
+            display: grid;
+            grid-template-columns: 320px 1fr; /* Columna izquierda fija, derecha flexible */
+            gap: 24px;
+            align-items: stretch; /* Que ambas columnas tengan la misma altura */
         }
-        .chart-header { display: flex; justify-content: space-between; margin-bottom: 25px; }
+
+        /* SECCIÓN DE ANÁLISIS (Izquierda) */
+        .analysis-card {
+            background: linear-gradient(180deg, rgba(6, 182, 212, 0.08) 0%, rgba(15, 23, 42, 0.02) 100%);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            border-radius: 16px; padding: 30px;
+            display: flex; flex-direction: column;
+            height: 100%; /* Para que estire junto con la gráfica */
+        }
+        .analysis-title { font-size: 16px; font-weight: 700; color: var(--accent-cyan); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; letter-spacing: -0.5px;}
+        .analysis-text { font-size: 15px; line-height: 1.7; color: #e2e8f0; flex-grow: 1; }
+
+        /* GRÁFICA (Derecha) */
+        .chart-wrapper {
+            background: var(--bg-card); border-radius: 16px; padding: 30px;
+            border: 1px solid var(--border-light); 
+            min-height: 450px; /* Altura mínima */
+            height: 100%; /* Para que estire */
+            position: relative;
+            margin-bottom: 0; /* Quitamos margen inferior */
+        }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .chart-title { font-size: 18px; font-weight: 600; }
 
-        /* NUEVA SECCIÓN: ANÁLISIS AUTOMÁTICO */
-        .analysis-card {
-            background: linear-gradient(180deg, rgba(6, 182, 212, 0.05) 0%, rgba(15, 23, 42, 0) 100%);
-            border: 1px solid rgba(6, 182, 212, 0.2);
-            border-radius: 16px; padding: 30px;
+        /* Responsivo para móviles */
+        @media (max-width: 900px) {
+            .main-content-grid { grid-template-columns: 1fr; } /* Se apila en una columna */
+            .chart-wrapper { height: 400px; }
+            .analysis-card { height: auto; order: 2; } /* El análisis baja en móviles */
+            .chart-wrapper { order: 1; }
         }
-        .analysis-title { font-size: 16px; font-weight: 600; color: var(--accent-cyan); margin-bottom: 15px; display: flex; align-items: center; gap: 8px;}
-        .analysis-text { font-size: 15px; line-height: 1.6; color: #e2e8f0; max-width: 900px; }
     </style>
 </head>
 <body>
@@ -116,22 +138,26 @@
             </div>
         </div>
 
-        <div class="chart-wrapper">
-            <div class="chart-header">
-                <div class="chart-title">Tendencia Diaria (Enero)</div>
+        <div class="main-content-grid">
+            
+            <div class="analysis-card">
+                <div class="analysis-title">
+                    <svg width="22" height="22" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>
+                    Executive Insights
+                </div>
+                <div class="analysis-text" id="ai-analysis-text">
+                    <p style="color: var(--text-muted);">Analizando los datos de consumo en tiempo real para generar conclusiones...</p>
+                </div>
             </div>
-            <canvas id="mainChart"></canvas>
+
+            <div class="chart-wrapper">
+                <div class="chart-header">
+                    <div class="chart-title">Tendencia Diaria (Enero)</div>
+                </div>
+                <canvas id="mainChart"></canvas>
+            </div>
         </div>
 
-        <div class="analysis-card">
-            <div class="analysis-title">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
-                Executive Insights (Generado Automáticamente)
-            </div>
-            <div class="analysis-text" id="ai-analysis-text">
-                Analizando datos de consumo...
-            </div>
-        </div>
     </div>
 
     <script>
@@ -149,26 +175,25 @@
             } catch(e) { return longDate.substring(0,5); }
         }
 
-        // GENERADOR DE ANÁLISIS DINÁMICO
+        // GENERADOR DE ANÁLISIS DINÁMICO MEJORADO
         function generateAnalysis(percent, buffer, avgReal, avgSafe) {
             const fmt = new Intl.NumberFormat('es-CO');
-            let text = "";
+            let html = "";
 
             if (percent > 100) {
-                text = `<strong>ALERTA CRÍTICA:</strong> El consumo actual proyecta un cierre de mes que excede el plan contratado en ${fmt.format(Math.abs(buffer))} ejecuciones. 
-                El promedio diario actual (${fmt.format(avgReal)}) es insostenible frente al límite seguro de ${fmt.format(avgSafe)}. 
-                Se recomienda detener procesos no esenciales inmediatamente o adquirir un paquete de ampliación.`;
+                html = `<p style="color: #fca5a5; font-weight: 600; margin-bottom: 10px;">⚠️ ALERTA: Límite excedido.</p>
+                <p>La proyección de cierre supera el plan en <strong>${fmt.format(Math.abs(buffer))} ejecuciones</strong>. El promedio diario actual (${fmt.format(avgReal)}) es insostenible. Se requiere acción inmediata para detener procesos o ampliar el plan.</p>`;
             } else if (percent > 90) {
-                text = `<strong>ATENCIÓN REQUERIDA:</strong> Estamos entrando en zona de riesgo. Aunque técnicamente dentro del límite, el margen de maniobra es mínimo (${fmt.format(buffer)} ejecuciones restantes).
-                Cualquier pico inesperado en los próximos días podría causar un sobrecosto. Se sugiere monitoreo diario estricto hasta el cierre de mes.`;
+                html = `<p style="color: #fcd34d; font-weight: 600; margin-bottom: 10px;">⚠️ Zona de Riesgo.</p>
+                <p>El margen de maniobra es mínimo, con solo <strong>${fmt.format(buffer)} ejecuciones restantes</strong>. Cualquier pico inesperado causará un sobrecosto. Se recomienda monitoreo estricto.</p>`;
             } else if (percent > 80) {
-                text = `<strong>CONSUMO MODERADO-ALTO:</strong> La operación se mantiene estable. Con una utilización proyectada del ${percent.toFixed(1)}%, estamos optimizando bien la inversión del plan. 
-                El promedio de consumo diario es saludable, pero se recomienda vigilar los días pico para no reducir el colchón de seguridad.`;
+                html = `<p style="color: #7dd3fc; font-weight: 600; margin-bottom: 10px;">ℹ️ Consumo Moderado-Alto.</p>
+                <p>La operación es estable con una utilización del <strong>${percent.toFixed(1)}%</strong>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad en los días restantes.</p>`;
             } else {
-                text = `<strong>RENDIMIENTO ÓPTIMO:</strong> El consumo está perfectamente controlado. Proyectamos finalizar el mes con un excedente de ${fmt.format(buffer)} ejecuciones no utilizadas. 
-                El sistema opera de manera eficiente por debajo de los límites de capacidad.`;
+                html = `<p style="color: #86efac; font-weight: 600; margin-bottom: 10px;">✅ Rendimiento Óptimo.</p>
+                <p>El consumo está perfectamente controlado. Proyectamos finalizar con un excedente de <strong>${fmt.format(buffer)} ejecuciones</strong>. El sistema opera eficientemente bajo los límites.</p>`;
             }
-            return text;
+            return html;
         }
 
         async function initDashboard() {
@@ -234,7 +259,7 @@
 
                 document.getElementById('update-time').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
-                // INYECTAR ANÁLISIS INTELIGENTE
+                // INYECTAR ANÁLISIS (Ahora en la columna izquierda)
                 document.getElementById('ai-analysis-text').innerHTML = generateAnalysis(percent, buffer, avgReal, avgSafe);
 
                 // Gráfica
