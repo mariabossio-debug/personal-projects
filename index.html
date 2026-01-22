@@ -12,9 +12,9 @@
     
     <style>
         :root {
-            --bg-body: #0b1120;       /* Fondo oscuro profundo */
-            --bg-sidebar: #111827;    /* Sidebar oscuro */
-            --bg-card: #1f2937;       /* Tarjetas gris/azuladas */
+            --bg-body: #0b1120;
+            --bg-sidebar: #111827;
+            --bg-card: #1f2937;
             --text-main: #f3f4f6;
             --text-muted: #9ca3af;
             --accent-blue: #3b82f6;
@@ -27,32 +27,22 @@
 
         body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; display: flex; min-height: 100vh; }
 
-        /* --- SIDEBAR MINIMALISTA --- */
-        .sidebar { 
-            width: 240px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); 
-            padding: 30px 20px; display: flex; flex-direction: column; position: fixed; height: 100%; z-index: 10; 
-        }
-        .brand { 
-            display: flex; align-items: center; gap: 12px; margin-bottom: 50px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); 
-        }
+        /* SIDEBAR */
+        .sidebar { width: 240px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 30px 20px; display: flex; flex-direction: column; position: fixed; height: 100%; z-index: 10; }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 50px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
         .brand img { width: 28px; height: 28px; }
         .brand span { font-size: 18px; font-weight: 700; color: white; }
-
+        
         .menu-label { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
-        .menu-item { 
-            display: flex; align-items: center; gap: 12px; padding: 12px 15px; 
-            color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: all 0.2s; 
-            margin-bottom: 5px; font-size: 14px; font-weight: 500; 
-        }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 12px 15px; color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: all 0.2s; margin-bottom: 5px; font-size: 14px; font-weight: 500; }
         .menu-item:hover { background-color: rgba(255,255,255,0.05); color: white; }
         .menu-item.active { background-color: var(--accent-blue); color: white; }
         .menu-icon { width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; }
         .menu-icon img { width: 100%; height: 100%; filter: grayscale(100%) brightness(200%); }
         .menu-item.active .menu-icon img { filter: none; brightness: 0; invert: 1; }
 
-        /* --- CONTENIDO --- */
+        /* MAIN */
         .main-content { margin-left: 240px; padding: 40px 50px; width: 100%; max-width: 1400px; }
-        
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
         .update-pill { font-size: 12px; background: #374151; padding: 6px 12px; border-radius: 20px; color: #d1d5db; }
@@ -63,53 +53,38 @@
 
         /* KPIs */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 30px; }
-        .kpi-card { 
-            background: var(--bg-card); padding: 24px; border-radius: 16px; 
-            border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); 
-        }
+        .kpi-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
         .kpi-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-bottom: 10px; }
         .kpi-num { font-size: 32px; font-weight: 700; color: white; letter-spacing: -1px; }
         .kpi-sub { font-size: 13px; margin-top: 5px; color: #6b7280; }
 
-        /* LAYOUT CENTRAL */
+        /* SPLIT LAYOUT */
         .dashboard-split { display: grid; grid-template-columns: 320px 1fr; gap: 24px; min-height: 500px; }
         
-        /* INSIGHTS (Estilo Clásico Recuperado) */
-        .insights-card { 
-            background: #1e293b; border: 1px solid var(--border-color); border-radius: 16px; padding: 25px;
-            display: flex; flex-direction: column; 
-        }
-        .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border-color); }
+        /* INSIGHTS (Diseño Solicitado) */
+        .insights-card { background: #1f2937; border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; }
+        .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         .insights-header svg { color: var(--accent-cyan); }
         .insights-header span { font-size: 16px; font-weight: 600; color: var(--accent-cyan); }
         
-        .insight-status-title { font-size: 14px; font-weight: 700; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
-        .insight-body { font-size: 14px; line-height: 1.6; color: #d1d5db; }
-        .insight-highlight { color: white; font-weight: 600; }
+        .insight-highlight-box { margin-bottom: 15px; }
+        .insight-status-line { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin-bottom: 15px; }
+        .insight-icon-box { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color:white;}
+        
+        .insight-text { font-size: 14px; line-height: 1.6; color: #d1d5db; }
+        .insight-bold { font-weight: 700; color: white; }
 
         /* GRÁFICA */
-        .chart-wrapper { 
-            background: var(--bg-card); border-radius: 16px; padding: 25px; border: 1px solid var(--border-color); 
-            display: flex; flex-direction: column; 
-        }
+        .chart-wrapper { background: var(--bg-card); border-radius: 16px; padding: 25px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
         .chart-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .chart-title { font-size: 16px; font-weight: 600; }
         .legend { display: flex; gap: 15px; font-size: 12px; color: #9ca3af; }
         .leg-item { display: flex; align-items: center; gap: 6px; }
         .dot { width: 8px; height: 8px; border-radius: 50%; }
-        
         .canvas-container { flex-grow: 1; position: relative; width: 100%; min-height: 350px; }
 
-        /* COLORES */
-        .txt-green { color: var(--accent-green); }
-        .txt-red { color: var(--accent-red); }
-        .txt-warn { color: var(--accent-warn); }
-
-        /* DAPTA PLACEHOLDER */
-        .dapta-logo-css { 
-            width: 20px; height: 20px; background: #3b82f6; border-radius: 4px; 
-            color: white; font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; 
-        }
+        .txt-green { color: var(--accent-green); } .txt-red { color: var(--accent-red); } .txt-warn { color: var(--accent-warn); }
+        .dapta-logo-css { width: 20px; height: 20px; background: #3b82f6; border-radius: 4px; color: white; font-size: 9px; font-weight: 900; display: flex; align-items: center; justify-content: center; }
 
         @media (max-width: 1000px) { .dashboard-split { grid-template-columns: 1fr; } .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } }
     </style>
@@ -121,26 +96,18 @@
             <img src="https://bold.co/favicons/favicon-32x32.png" alt="Bold">
             <span>Bold</span>
         </div>
-
         <div class="menu-label">Plataformas</div>
-        
         <div class="menu-item active" onclick="switchView('n8n', this)">
-            <div class="menu-icon">
-                <img src="https://n8n.io/favicon.ico" alt="n8n">
-            </div>
+            <div class="menu-icon"><img src="https://n8n.io/favicon.ico" alt="n8n"></div>
             <span>n8n</span>
         </div>
-        
         <div class="menu-item" onclick="switchView('dapta', this)">
-            <div class="menu-icon">
-                <div class="dapta-logo-css">D</div>
-            </div>
+            <div class="menu-icon"><div class="dapta-logo-css">D</div></div>
             <span>Dapta</span>
         </div>
     </aside>
 
     <main class="main-content">
-        
         <section id="n8n-view" class="view-section active-view">
             <div class="header">
                 <h1>Reporte de Consumo Enero</h1>
@@ -171,7 +138,6 @@
             </div>
 
             <div class="dashboard-split">
-                
                 <div class="insights-card">
                     <div class="insights-header">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
@@ -205,11 +171,9 @@
                 <p>Sin conexión a API de Dapta</p>
             </div>
         </section>
-
     </main>
 
     <script>
-        // NAVEGACIÓN
         function switchView(view, el) {
             document.querySelectorAll('.view-section').forEach(v => v.classList.remove('active-view'));
             document.getElementById(view + '-view').classList.add('active-view');
@@ -217,7 +181,6 @@
             el.classList.add('active');
         }
 
-        // DATOS
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
         const PLAN_LIMIT = 50000;
 
@@ -227,21 +190,20 @@
                 const txt = await res.text();
                 const parsed = Papa.parse(txt, { header: false }).data;
 
-                // 1. BUSCAR LA FILA DE ENCABEZADOS REALES (Donde dice "Exitosas", "Fallidas")
-                // En tu imagen, parece estar en la fila 3 (índice 2)
+                // 1. BUSCAR ENCABEZADOS (Fila de "Exitosas", "Fallidas")
                 let headerRowIdx = parsed.findIndex(row => row.join(' ').toLowerCase().includes("exitosas"));
-                if(headerRowIdx === -1) headerRowIdx = 0; // Fallback
+                if(headerRowIdx === -1) headerRowIdx = 0;
 
                 const headers = parsed[headerRowIdx].map(h => h.toLowerCase().trim());
                 
-                // 2. MAPEAR COLUMNAS
-                const colFecha = 0; // Asumimos A siempre es Fecha
-                // Buscamos índices dinámicos o fijos según tu imagen
+                // 2. COLUMNAS
+                const colFecha = 0; // A siempre es fecha
                 const colExitosas = headers.findIndex(h => h.includes("exitosas"));
                 const colFallidas = headers.findIndex(h => h.includes("fallidas"));
-                const colTotal = headers.findIndex(h => h.includes("total diario")); // O Consumo Final
+                // Buscamos "Consumo final" o "Total diario"
+                const colTotal = headers.findIndex(h => h.includes("consumo final") || h.includes("total diario"));
 
-                // Arrays para gráfica
+                // Arrays
                 const labels = [];
                 const dTotal = [];
                 const dSuccess = [];
@@ -251,38 +213,40 @@
                 let sumSuccess = 0;
                 let sumFail = 0;
 
-                // 3. RECORRER DATOS
+                // 3. RECORRER
                 for(let i = headerRowIdx + 1; i < parsed.length; i++) {
                     const row = parsed[i];
-                    if(!row[0]) continue; // Saltar filas vacías
+                    if(!row[0]) continue;
 
-                    // Parsear Fecha
-                    let dateStr = row[0]; // Columna A
-                    // Limpieza: "jueves, 1 de enero..." -> "01 Ene"
+                    // Fecha Limpia
+                    let dateStr = row[0];
                     try {
                         if(dateStr.includes(',')) dateStr = dateStr.split(',')[1].trim();
                         let parts = dateStr.split(' ');
                         if(parts.length >= 3) dateStr = parts[0] + ' ' + parts[2].substring(0,3);
                     } catch(e) {}
 
-                    // Helper para limpiar números (1.234 -> 1234)
-                    const clean = (val) => parseInt((val||"0").toString().replace(/\./g,'').replace(/,/g,'')) || 0;
+                    // Helper para limpiar
+                    const clean = (val) => {
+                        if(!val) return 0;
+                        return parseInt(val.toString().replace(/\./g,'').replace(/,/g,'')) || 0;
+                    };
 
+                    let vTotal = clean(row[colTotal]);
                     let vSucc = clean(row[colExitosas]);
                     let vFail = clean(row[colFallidas]);
-                    let vTot = clean(row[colTotal]);
 
-                    // Si la celda de "Total" está vacía pero hay datos en success/fail, sumamos
-                    if(vTot === 0 && (vSucc + vFail > 0)) vTot = vSucc + vFail;
-
-                    // Guardar solo si hay actividad
-                    if(vTot > 0 || vSucc > 0 || vFail > 0) {
+                    // LOGICA CLAVE: Si hay Total (ej 1.368) pero Succ/Fail son 0 (vacíos),
+                    // respetamos el Total para la línea azul, y dejamos Succ/Fail en 0.
+                    // Esto arregla el problema del 1 al 6 de enero.
+                    
+                    if(vTotal > 0 || vSucc > 0 || vFail > 0) {
                         labels.push(dateStr);
-                        dTotal.push(vTot);
+                        dTotal.push(vTotal);
                         dSuccess.push(vSucc);
                         dFail.push(vFail);
 
-                        sumTotal += vTot;
+                        sumTotal += vTotal;
                         sumSuccess += vSucc;
                         sumFail += vFail;
                     }
@@ -294,7 +258,7 @@
                 const days = dTotal.length || 1;
                 const avg = sumTotal / days;
                 
-                // RENDER DOM
+                // RENDER KPIS
                 const fmt = new Intl.NumberFormat('es-CO');
                 document.getElementById('kpi-proj').innerText = fmt.format(sumTotal);
                 document.getElementById('kpi-buffer').innerText = fmt.format(buffer);
@@ -302,7 +266,6 @@
                 document.getElementById('kpi-buffer-txt').innerText = buffer > 0 ? "Margen seguro" : "Límite excedido";
                 document.getElementById('kpi-percent').innerText = percent.toFixed(1) + '%';
                 
-                // Estado General
                 let status = "Óptimo", colorClass = "txt-green";
                 if(percent > 85) { status = "Precaución"; colorClass = "txt-warn"; }
                 if(percent > 100) { status = "Crítico"; colorClass = "txt-red"; }
@@ -312,44 +275,42 @@
                 
                 document.getElementById('last-update').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
-                // GENERAR INSIGHTS (Estilo Clásico)
-                generateInsights(percent, buffer, sumFail);
+                // GENERAR INSIGHTS (Formato solicitado)
+                generateInsights(percent, buffer);
 
-                // GRÁFICA TRIDENTE
+                // GRÁFICA
                 renderChart(labels, dTotal, dSuccess, dFail);
 
             } catch (err) { console.error(err); }
         }
 
-        function generateInsights(percent, buffer, failures) {
+        function generateInsights(percent, buffer) {
             const fmt = new Intl.NumberFormat('es-CO');
-            let title = "", desc = "";
-            let color = "#3b82f6"; // Azul por defecto
+            let color = "#10b981"; 
+            let icon = "i";
+            let title = "Consumo Moderado-Alto.";
+            
+            // Texto dinámico basado en tu imagen de referencia
+            let desc = `La operación es estable con una utilización del <span class="insight-bold">${percent.toFixed(1)}%</span>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad en los días restantes.`;
 
             if(percent > 100) {
                 title = "Crítico: Límite Excedido.";
-                desc = `La operación ha superado el plan contratado. Se registra un sobreconsumo.`;
-                color = "#ef4444";
-            } else if (percent > 85) {
-                title = "Consumo Moderado-Alto.";
-                desc = `La operación es estable con una utilización del <span class="insight-highlight">${percent.toFixed(1)}%</span>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad (${fmt.format(buffer)}) en los días restantes.`;
-                color = "#f59e0b"; // Naranja
-            } else {
+                desc = `Hemos superado el límite del plan por ${fmt.format(Math.abs(buffer))} ejecuciones. Se requiere acción inmediata.`;
+                color = "#ef4444"; icon = "!";
+            } else if (percent <= 85) {
                 title = "Rendimiento Óptimo.";
-                desc = `El consumo está bajo control (${percent.toFixed(1)}%). Contamos con un margen saludable de ${fmt.format(buffer)} ejecuciones.`;
-                color = "#10b981"; // Verde
-            }
-
-            // Advertencia de fallos si existen
-            if(failures > 100) {
-                desc += `<br><br><span style="color:#ef4444">⚠️ Atención:</span> Se han detectado ${fmt.format(failures)} ejecuciones fallidas acumuladas. Revisar logs.`;
+                desc = `El consumo está bajo control (${percent.toFixed(1)}%). Contamos con un margen saludable de ${fmt.format(buffer)} ejecuciones disponibles.`;
+                color = "#10b981"; icon = "✓";
+            } else {
+                color = "#3b82f6"; // Azul para moderado/alto como en tu imagen
             }
 
             const html = `
-                <div class="insight-status-title" style="color:${color}">
-                    ℹ ${title}
+                <div class="insight-status-line" style="color:${color}">
+                    <div class="insight-icon-box" style="background:${color}">${icon}</div>
+                    ${title}
                 </div>
-                <div class="insight-body">
+                <div class="insight-text">
                     ${desc}
                 </div>
             `;
