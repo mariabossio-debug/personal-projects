@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reporte consumos n8n | Dapta</title>
-    <link rel="icon" href="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://bold.co&size=64">
+    <title>Reporte Operativo | Bold</title>
+    <link rel="icon" type="image/png" href="https://bold.co/favicons/favicon-32x32.png">
     
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
@@ -12,370 +12,299 @@
     
     <style>
         :root {
-            --bg-body: #0f172a;       /* Slate 900 */
-            --bg-sidebar: #1e293b;    /* Slate 800 */
-            --bg-card: #1e293b;
+            --bg-body: #0f172a;       /* Fondo Principal */
+            --bg-sidebar: #1e293b;    /* Barra Lateral */
+            --bg-card: #1e293b;       /* Tarjetas */
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --accent-n8n: #ff6d5a;    /* Color naranja oficial n8n */
-            --accent-dapta: #3b82f6;  /* Azul para Dapta */
+            --accent-blue: #3b82f6;   /* Azul Principal */
+            --accent-green: #10b981;  /* Éxito */
+            --accent-red: #ef4444;    /* Fallo */
             --border-color: #334155;
-            --success: #10b981;
-            --danger: #ef4444;
-            --warning: #f59e0b;
         }
 
-        body {
-            background-color: var(--bg-body);
-            color: var(--text-main);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            display: flex;
-            min-height: 100vh;
-        }
+        body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; margin: 0; display: flex; min-height: 100vh; }
 
-        /* --- SIDEBAR (Barra Lateral) --- */
-        .sidebar {
-            width: 260px;
-            background-color: var(--bg-sidebar);
-            border-right: 1px solid var(--border-color);
-            padding: 30px 20px;
-            display: flex;
-            flex-direction: column;
-            position: fixed;
-            height: 100%;
-        }
+        /* --- SIDEBAR --- */
+        .sidebar { width: 250px; background-color: var(--bg-sidebar); border-right: 1px solid var(--border-color); padding: 30px 20px; display: flex; flex-direction: column; position: fixed; height: 100%; z-index: 10; }
+        .brand { display: flex; align-items: center; gap: 12px; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .brand img { width: 32px; height: auto; }
+        .brand span { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .brand img { width: 32px; height: 32px; border-radius: 6px; }
-        .brand span { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+        .menu-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; margin-top: 20px; }
+        .menu-item { display: flex; align-items: center; gap: 12px; padding: 10px 12px; color: var(--text-muted); border-radius: 8px; cursor: pointer; transition: all 0.2s; margin-bottom: 5px; font-size: 14px; font-weight: 500; }
+        .menu-item:hover { background-color: rgba(255, 255, 255, 0.05); color: white; }
+        .menu-item.active { background-color: var(--accent-blue); color: white; }
+        .menu-item img { width: 20px; height: 20px; filter: grayscale(100%) brightness(150%); }
+        .menu-item.active img { filter: none; }
 
-        .menu-item {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 12px 15px;
-            color: var(--text-muted);
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-            margin-bottom: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-        .menu-item:hover, .menu-item.active {
-            background-color: rgba(255, 255, 255, 0.05);
-            color: white;
-        }
-        .menu-item.active { border-left: 3px solid var(--accent-n8n); }
+        /* --- MAIN CONTENT --- */
+        .main-content { margin-left: 250px; padding: 40px; width: 100%; max-width: 1200px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 700; }
+        .date-badge { font-size: 13px; color: var(--text-muted); background: var(--bg-card); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); display: flex; align-items: center; gap: 6px;}
 
-        /* --- CONTENIDO PRINCIPAL --- */
-        .main-content {
-            margin-left: 260px; /* Espacio para el sidebar */
-            padding: 40px;
-            width: 100%;
-            max-width: 1200px;
-        }
+        /* VIEWS */
+        .view-section { display: none; } /* Ocultar vistas por defecto */
+        .view-section.active-view { display: block; } /* Mostrar la activa */
 
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-        }
-        .header h1 { margin: 0; font-size: 28px; font-weight: 700; }
-        .date-badge { font-size: 13px; color: var(--text-muted); background: var(--bg-card); padding: 5px 12px; border-radius: 20px; border: 1px solid var(--border-color); }
-
-        /* --- TARJETAS DE SERVICIOS (n8n y Dapta) --- */
-        .service-header {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            margin-bottom: 20px;
-            margin-top: 10px;
-        }
-        .service-logo-box {
-            width: 40px; height: 40px;
-            background: white;
-            border-radius: 8px;
-            display: flex; align-items: center; justify-content: center;
-            padding: 5px;
-        }
-        .service-logo-box img { max-width: 100%; max-height: 100%; }
-        .service-title { font-size: 20px; font-weight: 600; }
-
-        /* GRID DE KPIS */
-        .kpi-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-        }
-
-        .kpi-card {
-            background: var(--bg-card);
-            padding: 24px;
-            border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
-            position: relative;
-            overflow: hidden;
-        }
-        /* Decoración superior de la tarjeta */
-        .kpi-card.n8n::before { content:''; position: absolute; top:0; left:0; width:100%; height:3px; background: var(--accent-n8n); opacity: 0.7; }
-        .kpi-card.dapta::before { content:''; position: absolute; top:0; left:0; width:100%; height:3px; background: var(--accent-dapta); opacity: 0.7; }
-
+        /* KPI GRID */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
+        .kpi-card { background: var(--bg-card); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .kpi-label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; }
-        .kpi-value { font-size: 30px; font-weight: 700; }
-        .kpi-sub { font-size: 13px; margin-top: 8px; color: var(--text-muted); }
+        .kpi-value { font-size: 28px; font-weight: 700; }
+        .kpi-sub { font-size: 12px; margin-top: 6px; color: var(--text-muted); }
 
-        .txt-green { color: var(--success); } .txt-red { color: var(--danger); } .txt-warn { color: var(--warning); }
+        /* --- LAYOUT MEDIO (Insights + Gráfica) --- */
+        .middle-grid { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: stretch; height: 450px; }
+        
+        /* INSIGHTS (Izquierda) */
+        .analysis-card { background: linear-gradient(180deg, rgba(59, 130, 246, 0.08) 0%, rgba(15, 23, 42, 0) 100%); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 16px; padding: 25px; overflow-y: auto; }
+        .analysis-title { font-size: 15px; font-weight: 700; color: var(--accent-blue); margin-bottom: 15px; display: flex; align-items: center; gap: 8px; }
+        .analysis-text { font-size: 14px; line-height: 1.6; color: #cbd5e1; }
 
-        /* GRÁFICA */
-        .chart-container {
-            background: var(--bg-card);
-            border-radius: 16px;
-            padding: 30px;
-            border: 1px solid var(--border-color);
-            height: 400px;
-            position: relative;
-            margin-bottom: 50px; /* Espacio antes del siguiente panel */
-        }
+        /* GRÁFICA (Derecha) */
+        .chart-wrapper { background: var(--bg-card); border-radius: 16px; padding: 25px; border: 1px solid var(--border-color); display: flex; flex-direction: column; position: relative; }
+        .chart-header { display: flex; justify-content: space-between; margin-bottom: 15px; flex-shrink: 0; }
+        .chart-title { font-size: 16px; font-weight: 600; }
+        .chart-legend { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); }
+        .legend-item { display: flex; align-items: center; gap: 5px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        .canvas-container { flex-grow: 1; position: relative; width: 100%; min-height: 0; }
 
-        /* SEPARADOR */
-        .divider { height: 1px; background: var(--border-color); margin: 40px 0; }
+        /* Utilidades */
+        .txt-green { color: var(--accent-green); } .txt-red { color: var(--accent-red); }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 400px; color: var(--text-muted); border: 2px dashed var(--border-color); border-radius: 16px; }
 
-        @media (max-width: 768px) {
-            .sidebar { display: none; } /* En móvil ocultamos sidebar simple */
-            .main-content { margin-left: 0; padding: 20px; }
-        }
+        @media (max-width: 900px) { .sidebar { display: none; } .main-content { margin-left: 0; padding: 20px; } .middle-grid { grid-template-columns: 1fr; height: auto; } .chart-wrapper { height: 400px; order: 1; } .analysis-card { height: auto; order: 2; } }
     </style>
 </head>
 <body>
 
     <aside class="sidebar">
         <div class="brand">
-            <img src="https://t2.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=http://bold.co&size=128" alt="Bold Logo">
+            <img src="https://bold.co/favicons/favicon-32x32.png" alt="Bold">
             <span>Bold</span>
         </div>
 
-        <div class="menu-item active">
-            <span>📊 Dashboard General</span>
+        <div class="menu-label">Plataformas</div>
+        <div class="menu-item active" onclick="switchView('n8n', this)">
+            <img src="https://d2r3btx883t522.cloudfront.net/j79707/static/images/n8n_logo.svg" alt="n8n">
+            <span>n8n Workflows</span>
         </div>
-        <div class="menu-item">
-            <span>⚙️ Configuraciones</span>
-        </div>
-        
-        <div style="margin-top: auto; padding-top: 20px; border-top: 1px solid var(--border-color);">
-            <div class="menu-item">
-                <span style="font-size: 12px; color: var(--text-muted);">Usuario: Admin</span>
-            </div>
+        <div class="menu-item" onclick="switchView('dapta', this)">
+            <div style="width:20px; height:20px; background:#3b82f6; border-radius:4px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:9px; color:white;">D</div>
+            <span>Dapta API</span>
         </div>
     </aside>
 
     <main class="main-content">
         
-        <div class="header">
-            <h1>Reporte de Infraestructura</h1>
-            <div class="date-badge" id="update-time">Actualizando...</div>
-        </div>
-
-        <section id="n8n-panel">
-            <div class="service-header">
-                <div class="service-logo-box">
-                    <img src="https://res.cloudinary.com/zapier/image/upload/f_auto,q_auto/v1/dynamic/integration/icon/n8n/n8n" alt="n8n">
-                </div>
-                <div class="service-title" style="color: #ff6d5a;">n8n Workflows</div>
+        <section id="n8n-view" class="view-section active-view">
+            <div class="header">
+                <h1>Monitor de Operaciones n8n</h1>
+                <div class="date-badge"><span style="color:var(--accent-green)">●</span> <span id="update-time">Cargando...</span></div>
             </div>
 
             <div class="kpi-grid">
-                <div class="kpi-card n8n">
-                    <div class="kpi-label">Proyección Mes</div>
-                    <div class="kpi-value" id="n8n-proyeccion">--</div>
-                    <div class="kpi-sub">Total estimado ejecuciones</div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Ejecuciones Totales (Mes)</div>
+                    <div class="kpi-value" id="n8n-total">--</div>
                 </div>
-                <div class="kpi-card n8n">
-                    <div class="kpi-label">Colchón Disponible</div>
-                    <div class="kpi-value" id="n8n-colchon">--</div>
-                    <div class="kpi-sub" id="n8n-colchon-txt">Calculando...</div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Tasa de Éxito Global</div>
+                    <div class="kpi-value txt-green" id="n8n-success-rate">--%</div>
                 </div>
-                <div class="kpi-card n8n">
-                    <div class="kpi-label">Utilización Plan</div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Colchón del Plan</div>
+                    <div class="kpi-value" id="n8n-buffer">--</div>
+                </div>
+                <div class="kpi-card">
+                    <div class="kpi-label">Utilización</div>
                     <div class="kpi-value" id="n8n-percent">--%</div>
                     <div class="kpi-sub">Base 50.000</div>
                 </div>
-                <div class="kpi-card n8n">
-                    <div class="kpi-label">Estado Actual</div>
-                    <div class="kpi-value" id="n8n-status">--</div>
-                    <div class="kpi-sub" id="n8n-avg">-- / día</div>
-                </div>
             </div>
 
-            <div class="chart-container">
-                <canvas id="n8nChart"></canvas>
+            <div class="middle-grid">
+                <div class="analysis-card">
+                    <div class="analysis-title">✨ Smart Insights</div>
+                    <div class="analysis-text" id="ai-text">Analizando datos operativos...</div>
+                </div>
+
+                <div class="chart-wrapper">
+                    <div class="chart-header">
+                        <div class="chart-title">Salud Operativa Diaria</div>
+                        <div class="chart-legend">
+                            <div class="legend-item"><div class="dot" style="background: var(--accent-green);"></div>Exitosas</div>
+                            <div class="legend-item"><div class="dot" style="background: var(--accent-red);"></div>Fallidas</div>
+                        </div>
+                    </div>
+                    <div class="canvas-container">
+                        <canvas id="n8nChart"></canvas>
+                    </div>
+                </div>
             </div>
         </section>
 
-        <div class="divider"></div>
-
-        <section id="dapta-panel">
-            <div class="service-header">
-                <div class="service-logo-box" style="border: 1px solid #3b82f6;">
-                    <span style="color: #3b82f6; font-weight:900; font-size: 10px;">DAPTA</span>
-                </div>
-                <div class="service-title" style="color: #3b82f6;">Dapta API Requests</div>
+        <section id="dapta-view" class="view-section">
+            <div class="header">
+                <h1>Monitor de API Dapta</h1>
             </div>
-
-            <div class="kpi-grid">
-                <div class="kpi-card dapta">
-                    <div class="kpi-label">Requests Totales</div>
-                    <div class="kpi-value">12.5k</div>
-                    <div class="kpi-sub">Ciclo actual</div>
-                </div>
-                <div class="kpi-card dapta">
-                    <div class="kpi-label">Latencia Promedio</div>
-                    <div class="kpi-value txt-green">140ms</div>
-                    <div class="kpi-sub">Rendimiento óptimo</div>
-                </div>
-                <div class="kpi-card dapta">
-                    <div class="kpi-label">Errores (5xx)</div>
-                    <div class="kpi-value txt-green">0.1%</div>
-                    <div class="kpi-sub">Últimas 24h</div>
-                </div>
-                <div class="kpi-card dapta">
-                    <div class="kpi-label">Estado</div>
-                    <div class="kpi-value txt-green">Activo</div>
-                    <div class="kpi-sub">Todos los sistemas ok</div>
-                </div>
+            <div class="empty-state">
+                <svg width="64" height="64" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                <h3 style="margin-bottom: 5px;">Sin conexión a Dapta</h3>
+                <p>Integra el origen de datos para ver las métricas.</p>
             </div>
-            
-            <p style="color: var(--text-muted); font-size: 14px; text-align: center; margin-top: 20px;">
-                * Panel de Dapta en modo demostración. Conectar API para datos en tiempo real.
-            </p>
-
         </section>
 
     </main>
 
     <script>
-        // === CONFIGURACIÓN ===
-        // TU ENLACE CSV DE GOOGLE SHEETS:
+        // === LÓGICA DE NAVEGACIÓN ===
+        function switchView(viewName, clickedElement) {
+            // 1. Ocultar todas las vistas
+            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active-view'));
+            // 2. Mostrar la seleccionada
+            document.getElementById(viewName + '-view').classList.add('active-view');
+            
+            // 3. Actualizar menú activo
+            document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+            clickedElement.classList.add('active');
+        }
+
+        // === LÓGICA DE DATOS N8N ===
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
-        const N8N_LIMIT = 50000;
+        const PLAN_LIMIT = 50000;
 
         async function initN8N() {
             try {
-                // Truco Anti-Caché para que actualice rápido
                 const response = await fetch(SHEET_URL + '&t=' + Date.now());
                 const csvText = await response.text();
                 const parsed = Papa.parse(csvText, { header: false }).data;
 
-                // Lógica de búsqueda de columnas (igual que antes)
                 let headerIndex = parsed.findIndex(row => row.join(' ').toLowerCase().includes("consumo final"));
                 if(headerIndex === -1) headerIndex = 0;
 
                 const headers = parsed[headerIndex].map(h => h.toLowerCase().trim());
-                // Buscamos columnas clave
+                
+                // BUSCAR LAS 3 COLUMNAS CLAVE
                 const colFecha = headers.findIndex(h => h.includes("fecha") && !h.includes("corta"));
-                const colConsumo = headers.findIndex(h => h.includes("consumo final"));
+                const colExitosas = headers.findIndex(h => h.includes("exitosas"));
+                const colFallidas = headers.findIndex(h => h.includes("fallidas"));
+                // Si no encuentra las específicas, usa fallback (esto es para que no se rompa si tu sheet no tiene esas cols aun)
+                const colTotal = headers.findIndex(h => h.includes("consumo final"));
+
 
                 const labels = [];
-                const dataPoints = [];
-                let totalSum = 0;
+                const dataSuccess = [];
+                const dataFailed = [];
+                let sumTotal = 0;
+                let sumSuccess = 0;
 
-                // Procesamos los datos
                 for(let i = headerIndex + 1; i < parsed.length; i++) {
                     const row = parsed[i];
-                    if(row[colFecha] && row[colConsumo]) {
-                        // Formato fecha corto
+                    // Verificamos que exista la fecha y al menos una columna de datos
+                    if(row[colFecha] && (row[colExitosas] || row[colTotal])) {
+                        
+                        // Formato Fecha
                         let d = row[colFecha];
-                        try {
-                            if(d.includes(',')) d = d.split(',')[1].trim();
-                            let parts = d.split(' ');
-                            d = parts[0] + ' ' + parts[2].substring(0,3); // "01 Ene"
-                        } catch(e) {}
+                        try { if(d.includes(',')) d = d.split(',')[1].trim(); let p=d.split(' '); d=p[0]+' '+p[2].substring(0,3); } catch(e){}
                         
-                        let val = parseInt(row[colConsumo].toString().replace(/\./g, '').replace(/,/g, ''));
-                        
-                        if(!isNaN(val)) {
+                        // Parsear Valores (usando 0 si no existe la columna)
+                        let valSuccess = colExitosas > -1 ? parseInt(row[colExitosas].replace(/\./g,'')||0) : parseInt(row[colTotal].replace(/\./g,'')||0);
+                        let valFailed = colFallidas > -1 ? parseInt(row[colFallidas].replace(/\./g,'')||0) : 0;
+                        let valTotalLine = valSuccess + valFailed;
+
+                        if(!isNaN(valTotalLine) && valTotalLine > 0) {
                             labels.push(d);
-                            dataPoints.push(val);
-                            totalSum += val; // Suma real acumulada
+                            dataSuccess.push(valSuccess);
+                            dataFailed.push(valFailed);
+                            sumTotal += valTotalLine;
+                            sumSuccess += valSuccess;
                         }
                     }
                 }
 
-                // Cálculos
-                const buffer = N8N_LIMIT - totalSum;
-                const percent = (totalSum / N8N_LIMIT) * 100;
-                const days = dataPoints.length || 1;
-                const avg = totalSum / days;
+                // Cálculos KPIs
+                const buffer = PLAN_LIMIT - sumTotal;
+                const percent = (sumTotal / PLAN_LIMIT) * 100;
+                const successRate = sumTotal > 0 ? (sumSuccess / sumTotal) * 100 : 0;
 
-                // --- ACTUALIZAR DOM (Panel n8n) ---
+                // Render KPIs
                 const fmt = new Intl.NumberFormat('es-CO');
-                
-                document.getElementById('n8n-proyeccion').innerText = fmt.format(totalSum);
-                
-                const colchonEl = document.getElementById('n8n-colchon');
-                colchonEl.innerText = fmt.format(buffer);
-                colchonEl.className = 'kpi-value ' + (buffer > 0 ? 'txt-green' : 'txt-red');
-                document.getElementById('n8n-colchon-txt').innerText = buffer > 0 ? 'Margen seguro' : 'Límite excedido';
+                document.getElementById('n8n-total').innerText = fmt.format(sumTotal);
+                document.getElementById('n8n-success-rate').innerText = successRate.toFixed(1) + '%';
+                document.getElementById('n8n-success-rate').className = 'kpi-value ' + (successRate > 95 ? 'txt-green' : (successRate > 80 ? 'txt-warn' : 'txt-red'));
+                document.getElementById('n8n-buffer').innerText = fmt.format(buffer);
+                document.getElementById('n8n-percent').innerText = percent.toFixed(1) + '%';
+                document.getElementById('update-time').innerText = new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
-                const perEl = document.getElementById('n8n-percent');
-                perEl.innerText = percent.toFixed(1) + '%';
-                perEl.className = 'kpi-value ' + (percent > 100 ? 'txt-red' : (percent > 85 ? 'txt-warn' : 'txt-green'));
+                // Render Insights
+                generateInsights(percent, buffer, successRate);
 
-                const statEl = document.getElementById('n8n-status');
-                if(percent > 100) { statEl.innerText = "Crítico"; statEl.className = "kpi-value txt-red"; }
-                else if(percent > 85) { statEl.innerText = "Precaución"; statEl.className = "kpi-value txt-warn"; }
-                else { statEl.innerText = "Óptimo"; statEl.className = "kpi-value txt-green"; }
-                
-                document.getElementById('n8n-avg').innerText = `Prom: ${fmt.format(avg.toFixed(0))} / día`;
-                document.getElementById('update-time').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                // Render Gráfica Operativa (Multi-Línea)
+                drawOperationalChart(labels, dataSuccess, dataFailed);
 
-                // --- GRÁFICA N8N ---
-                const ctx = document.getElementById('n8nChart').getContext('2d');
-                let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(255, 109, 90, 0.5)'); // Naranja n8n
-                gradient.addColorStop(1, 'rgba(255, 109, 90, 0)');
+            } catch (error) { console.error(error); }
+        }
 
-                new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: labels,
-                        datasets: [{
-                            label: 'Ejecuciones n8n',
-                            data: dataPoints,
-                            borderColor: '#ff6d5a', // Naranja
-                            backgroundColor: gradient,
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.4
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: { legend: {display:false} },
-                        scales: {
-                            x: { grid: {display:false}, ticks: {color: '#94a3b8', maxTicksLimit: 10} },
-                            y: { grid: {color: '#334155', borderDash: [5,5]}, ticks: {color: '#94a3b8'} }
+        function generateInsights(percent, buffer, successRate) {
+            const fmt = new Intl.NumberFormat('es-CO');
+            let html = "";
+            
+            // Insight de Volumen
+            if(percent > 90) html += `⚠️ <strong>Riesgo de Volumen:</strong> Plan al ${percent.toFixed(0)}%. Quedan ${fmt.format(buffer)} ejecuciones. `;
+            else html += `✅ <strong>Volumen Controlado:</strong> Plan al ${percent.toFixed(0)}%. Margen saludable. `;
+
+            html += "<br><br>";
+
+            // Insight de Calidad Operativa (Experto)
+            if(successRate > 98) html += `🛡️ <strong>Operación Estable:</strong> Tasa de éxito excelente (${successRate.toFixed(1)}%). Los fallos son despreciables.`;
+            else if (successRate > 90) html += `ℹ️ <strong>Calidad Moderada:</strong> Tasa de éxito del ${successRate.toFixed(1)}%. Existe un volumen visible de fallos que debe ser monitoreado.`;
+            else html += `🚨 <strong>Atención Requerida:</strong> La tasa de fallos es alta. Solo el ${successRate.toFixed(1)}% de ejecuciones son exitosas. Revisar logs urgentemente.`;
+
+            document.getElementById('ai-text').innerHTML = html;
+        }
+
+        function drawOperationalChart(labels, dataSuccess, dataFailed) {
+            const ctx = document.getElementById('n8nChart').getContext('2d');
+            
+            // Degradados sutiles
+            let gradGreen = ctx.createLinearGradient(0,0,0,400); gradGreen.addColorStop(0,'rgba(16, 185, 129, 0.2)'); gradGreen.addColorStop(1,'rgba(16, 185, 129, 0)');
+            let gradRed = ctx.createLinearGradient(0,0,0,400); gradRed.addColorStop(0,'rgba(239, 68, 68, 0.2)'); gradRed.addColorStop(1,'rgba(239, 68, 68, 0)');
+
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Exitosas',
+                            data: dataSuccess,
+                            borderColor: '#10b981', // Verde
+                            backgroundColor: gradGreen,
+                            borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
+                        },
+                        {
+                            label: 'Fallidas',
+                            data: dataFailed,
+                            borderColor: '#ef4444', // Rojo
+                            backgroundColor: gradRed,
+                            borderWidth: 2, pointRadius: 0, fill: true, tension: 0.4
                         }
-                    }
-                });
-
-            } catch (error) {
-                console.error(error);
-            }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: {display: false}, tooltip: {mode: 'index', intersect: false} },
+                    scales: {
+                        x: { grid: {display:false}, ticks: {color: '#94a3b8', maxTicksLimit: 10, font:{size:11}} },
+                        y: { grid: {color: '#334155', borderDash:[5,5]}, ticks: {color: '#94a3b8', font:{size:11}}, beginAtZero: true }
+                    },
+                    interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                }
+            });
         }
 
         initN8N();
