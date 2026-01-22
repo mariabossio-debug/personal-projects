@@ -3,179 +3,267 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard Ejecutivo de Consumo</title>
+    <title>Monitor de Consumo n8n</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         body {
-            background-color: #121212; /* Fondo oscuro tipo n8n */
+            background-color: #0f111a; /* Fondo oscuro elegante */
             color: #ffffff;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 20px;
+            padding: 40px 20px;
             margin: 0;
         }
-        .card {
-            background-color: #1e1e1e;
-            border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-            padding: 25px;
-            width: 90%;
-            max-width: 1000px;
-            margin-bottom: 20px;
+        .container {
+            width: 100%;
+            max-width: 1100px;
         }
-        h1 { margin: 0 0 10px 0; font-size: 24px; font-weight: 600; }
-        p { color: #aaaaaa; margin: 0 0 20px 0; font-size: 14px; }
+        .header {
+            margin-bottom: 30px;
+            border-bottom: 1px solid #2d3748;
+            padding-bottom: 20px;
+        }
+        h1 { margin: 0; font-size: 24px; font-weight: 500; color: #e2e8f0; }
+        p { color: #a0aec0; margin: 5px 0 0 0; font-size: 14px; }
         
         /* Grid de KPIs */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        .kpi-box {
-            background: #2d2d2d;
-            padding: 15px;
+        .kpi-card {
+            background: #1a202c;
+            padding: 20px;
             border-radius: 8px;
-            border-left: 4px solid #ff6b6b;
+            border: 1px solid #2d3748;
+            transition: transform 0.2s;
         }
-        .kpi-title { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
-        .kpi-value { font-size: 28px; font-weight: bold; margin-top: 5px; }
-        .safe { border-left-color: #00e676; }
-        .warning { border-left-color: #ffea00; }
+        .kpi-card:hover { transform: translateY(-2px); border-color: #4a5568; }
+        .kpi-label { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f7fafc; }
+        
+        .status-good { color: #48bb78; } /* Verde */
+        .status-warn { color: #ecc94b; } /* Amarillo */
+        .status-danger { color: #f56565; } /* Rojo */
 
-        canvas { width: 100% !important; height: 400px !important; }
+        /* Contenedor de Gráfica */
+        .chart-container {
+            background-color: #1a202c;
+            border-radius: 12px;
+            border: 1px solid #2d3748;
+            padding: 25px;
+            height: 450px;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
     </style>
 </head>
 <body>
 
-    <div class="card">
-        <h1>Monitor de Ejecuciones</h1>
-        <p>Proyección en tiempo real vs Límite Mensual</p>
+    <div class="container">
+        <div class="header">
+            <h1>Dashboard de Ejecuciones</h1>
+            <p>Monitoreo en tiempo real del consumo mensual</p>
+        </div>
 
         <div class="kpi-grid">
-            <div class="kpi-box warning">
-                <div class="kpi-title">Proyección Fin de Mes</div>
-                <div class="kpi-value" id="val-projection">Cargando...</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Proyección Fin de Mes</div>
+                <div class="kpi-value" id="kpi-proyeccion">--</div>
             </div>
-            <div class="kpi-box safe">
-                <div class="kpi-title">Colchón Disponible</div>
-                <div class="kpi-value" id="val-buffer">Cargando...</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Cupo Disponible (Colchón)</div>
+                <div class="kpi-value" id="kpi-colchon">--</div>
             </div>
-            <div class="kpi-box">
-                <div class="kpi-title">Límite del Plan</div>
-                <div class="kpi-value">50.000</div>
+            <div class="kpi-card">
+                <div class="kpi-label">Consumo Hoy</div>
+                <div class="kpi-value" id="kpi-hoy">--</div>
+            </div>
+            <div class="kpi-card">
+                <div class="kpi-label">Estado del Plan</div>
+                <div class="kpi-value" id="kpi-estado">--</div>
             </div>
         </div>
 
-        <canvas id="myChart"></canvas>
+        <div class="chart-container">
+            <canvas id="mainChart"></canvas>
+        </div>
     </div>
 
     <script>
-        // --- CONFIGURACIÓN ---
-        // PEGA AQUÍ TU ENLACE CSV DE GOOGLE SHEETS
-        const SHEET_URL = 'TU_ENLACE_AQUI_ENTRE_LAS_COMILLAS'; 
+        // TU ENLACE VINCULADO:
+        const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
+        const PLAN_LIMIT = 50000;
 
-        // Función principal
-        async function initDashboard() {
-            if(SHEET_URL.includes('TU_ENLACE')) {
-                alert("¡Falta el enlace! Edita el archivo index.html y pon tu link de Google Sheets CSV.");
-                return;
-            }
+        async function init() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const csvText = await response.text();
+                
+                // Parsear CSV sin encabezados fijos para encontrar la fila correcta
+                const results = Papa.parse(csvText, { header: false });
+                const rawData = results.data;
 
-            // 1. Descargar datos
-            const response = await fetch(SHEET_URL);
-            const csvText = await response.text();
-            
-            // 2. Procesar CSV
-            const data = Papa.parse(csvText, { header: true, skipEmptyLines: true }).data;
-
-            // Filtramos y preparamos los arrays para la gráfica
-            // Asegúrate de que los nombres de columnas coincidan con tu Sheet: 'Fecha', 'Consumo final'
-            const labels = [];
-            const values = [];
-            
-            let lastValue = 0;
-
-            data.forEach(row => {
-                // Ajusta estos nombres si en tu sheet se llaman diferente (ej: "Fecha Corta")
-                // Se asume que la columna A es Fecha y la F (o G) es Consumo Final
-                if(row['Fecha'] && row['Consumo final']) { 
-                    // Truco: Cortar la fecha para que se vea bonita (dd-mmm) si viene larga
-                    let cleanDate = row['Fecha'].split(',')[1] || row['Fecha']; 
-                    labels.push(cleanDate);
-                    
-                    let val = parseInt(row['Consumo final'].replace('.', '').replace(',', ''));
-                    values.push(val);
-                    lastValue = val; // Guardamos el último para los KPIs
-                }
-            });
-
-            // Actualizar KPIs (Simulación básica, idealmente leerías las celdas de resumen)
-            document.getElementById('val-projection').innerText = new Intl.NumberFormat().format(values.reduce((a, b) => a + b, 0)); // Suma total aprox
-            document.getElementById('val-buffer').innerText = "Calculando..."; // Esto lo refinaremos
-
-            // 3. Crear Gráfica
-            const ctx = document.getElementById('myChart').getContext('2d');
-            
-            // Crear degradado bonito
-            let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-            gradient.addColorStop(0, 'rgba(54, 162, 235, 0.5)'); // Azul arriba
-            gradient.addColorStop(1, 'rgba(54, 162, 235, 0)');   // Transparente abajo
-
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: 'Consumo Diario',
-                        data: values,
-                        borderColor: '#36a2eb', // Azul eléctrico
-                        backgroundColor: gradient,
-                        borderWidth: 2,
-                        pointRadius: 0, // Sin puntos para que se vea limpio
-                        pointHoverRadius: 6,
-                        fill: true,
-                        tension: 0.4 // ¡La curva suave que querías!
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            mode: 'index',
-                            intersect: false,
-                            backgroundColor: 'rgba(0,0,0,0.8)',
-                            titleColor: '#fff',
-                            bodyFont: { size: 14 }
-                        }
-                    },
-                    scales: {
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: '#888', maxTicksLimit: 10 }
-                        },
-                        y: {
-                            grid: { color: '#333' }, // Líneas de fondo sutiles
-                            ticks: { color: '#888' },
-                            beginAtZero: true
-                        }
-                    },
-                    interaction: {
-                        mode: 'nearest',
-                        axis: 'x',
-                        intersect: false
+                // 1. Encontrar en qué fila están los títulos (buscamos "Consumo final" o "Fecha")
+                let headerIndex = -1;
+                for(let i=0; i<rawData.length; i++) {
+                    if(rawData[i].includes("Consumo final") || rawData[i].includes("Fecha")) {
+                        headerIndex = i;
+                        break;
                     }
                 }
-            });
+
+                if(headerIndex === -1) {
+                    console.error("No encontré los encabezados 'Fecha' o 'Consumo final'");
+                    return;
+                }
+
+                // 2. Mapear columnas dinámicamente
+                const headers = rawData[headerIndex];
+                const colFecha = headers.findIndex(h => h && h.toLowerCase().includes("fecha corta")) !== -1 
+                               ? headers.findIndex(h => h && h.toLowerCase().includes("fecha corta")) // Preferimos fecha corta si existe
+                               : headers.findIndex(h => h && h.toLowerCase().includes("fecha"));      // Si no, la normal
+                
+                const colConsumo = headers.findIndex(h => h && h.toLowerCase().includes("consumo final"));
+
+                // 3. Extraer datos limpios
+                const labels = [];
+                const dataPoints = [];
+                let lastValidValue = 0;
+
+                // Empezamos a leer DESPUÉS de la fila de encabezados
+                for(let i = headerIndex + 1; i < rawData.length; i++) {
+                    const row = rawData[i];
+                    // Si la fila tiene datos válidos
+                    if(row[colFecha] && row[colConsumo]) {
+                        // Limpiar fecha (si es larga "jueves 1...", tomamos algo corto si podemos, si no tal cual)
+                        let dateText = row[colFecha];
+                        // Intento básico de limpieza si viene texto largo
+                        if(dateText.includes(",")) dateText = dateText.split(",")[1].trim(); 
+
+                        // Limpiar número (quitar puntos de mil)
+                        let valStr = row[colConsumo].toString().replace(/\./g, "").replace(/,/g, "");
+                        let val = parseInt(valStr);
+
+                        if(!isNaN(val)) {
+                            labels.push(dateText);
+                            dataPoints.push(val);
+                            lastValidValue = val;
+                        }
+                    }
+                }
+
+                // 4. Calcular KPIs
+                const projectedTotal = dataPoints[dataPoints.length - 1]; // El último valor es la proyección final
+                // Buscar el consumo "real" de hoy (aproximación: último valor que no sea igual al promedio repetido... 
+                // pero por simplicidad usaremos el total proyectado y colchón)
+                
+                const buffer = PLAN_LIMIT - projectedTotal;
+                const percentage = (projectedTotal / PLAN_LIMIT) * 100;
+
+                // Actualizar HTML
+                document.getElementById('kpi-proyeccion').innerText = projectedTotal.toLocaleString();
+                
+                const colchonEl = document.getElementById('kpi-colchon');
+                colchonEl.innerText = buffer.toLocaleString();
+                if(buffer < 0) colchonEl.classList.add('status-danger');
+                else colchonEl.classList.add('status-good');
+
+                document.getElementById('kpi-hoy').innerText = new Date().toLocaleDateString('es-ES', {day: 'numeric', month: 'short'}); // Fecha hoy
+                
+                const estadoEl = document.getElementById('kpi-estado');
+                estadoEl.innerText = percentage.toFixed(1) + "%";
+                if(percentage > 100) estadoEl.className = 'kpi-value status-danger';
+                else if(percentage > 85) estadoEl.className = 'kpi-value status-warn';
+                else estadoEl.className = 'kpi-value status-good';
+
+
+                // 5. Dibujar Gráfica
+                const ctx = document.getElementById('mainChart').getContext('2d');
+                
+                // Degradado Azul SaaS
+                let gradient = ctx.createLinearGradient(0, 0, 0, 400);
+                gradient.addColorStop(0, 'rgba(66, 153, 225, 0.5)'); // Azul
+                gradient.addColorStop(1, 'rgba(66, 153, 225, 0)');   // Transparente
+
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Ejecuciones Acumuladas',
+                            data: dataPoints,
+                            borderColor: '#4299e1', // Azul brillante
+                            backgroundColor: gradient,
+                            borderWidth: 3,
+                            pointRadius: 0,
+                            pointHoverRadius: 6,
+                            pointBackgroundColor: '#fff',
+                            fill: true,
+                            tension: 0.4 // Curva suave
+                        },
+                        {
+                            label: 'Límite Plan',
+                            data: Array(labels.length).fill(PLAN_LIMIT),
+                            borderColor: '#f56565', // Rojo suave
+                            borderWidth: 2,
+                            borderDash: [5, 5], // Línea punteada
+                            pointRadius: 0,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                mode: 'index',
+                                intersect: false,
+                                backgroundColor: '#2d3748',
+                                titleColor: '#a0aec0',
+                                bodyFont: { size: 14, family: 'sans-serif' },
+                                padding: 12,
+                                cornerRadius: 8,
+                                displayColors: false,
+                                callbacks: {
+                                    label: function(context) {
+                                        return context.raw.toLocaleString() + ' ejecuciones';
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                grid: { display: false },
+                                ticks: { color: '#718096', maxTicksLimit: 12, maxRotation: 0 }
+                            },
+                            y: {
+                                grid: { color: '#2d3748', borderDash: [2, 4] },
+                                ticks: { color: '#718096' },
+                                beginAtZero: true
+                            }
+                        },
+                        interaction: {
+                            mode: 'nearest',
+                            axis: 'x',
+                            intersect: false
+                        }
+                    }
+                });
+
+            } catch (error) {
+                console.error("Error cargando datos:", error);
+                document.querySelector('.header').innerHTML += `<p style="color:red">Error cargando datos: Verifica que el CSV esté publicado públicamente.</p>`;
+            }
         }
 
-        initDashboard();
+        init();
     </script>
 </body>
 </html>
