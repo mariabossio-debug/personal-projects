@@ -11,7 +11,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* ESTILOS EXACTOS DE LA VERSIÓN QUE TE GUSTÓ */
         :root {
             --bg-body: #0b1120;
             --bg-sidebar: #111827;
@@ -42,7 +41,7 @@
         .menu-icon img { width: 100%; height: 100%; filter: grayscale(100%) brightness(200%); }
         .menu-item.active .menu-icon img { filter: none; brightness: 0; invert: 1; }
 
-        /* MAIN CONTENT */
+        /* MAIN */
         .main-content { margin-left: 240px; padding: 40px 50px; width: 100%; max-width: 1400px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
@@ -52,17 +51,33 @@
         .view-section.active-view { display: block; animation: fadeUp 0.5s ease; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* KPI GRID */
+        /* KPI CARDS CON TOOLTIPS */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 30px; }
-        .kpi-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
-        .kpi-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-bottom: 10px; }
-        .kpi-num { font-size: 32px; font-weight: 700; color: white; letter-spacing: -1px; }
-        .kpi-sub { font-size: 13px; margin-top: 5px; color: #6b7280; }
-
-        /* DASHBOARD SPLIT */
-        .dashboard-split { display: grid; grid-template-columns: 320px 1fr; gap: 24px; min-height: 500px; }
+        .kpi-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); position: relative; }
         
-        /* INSIGHTS CARD (ESTILO CORRECTO) */
+        /* Tooltip Container */
+        .kpi-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+        .kpi-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; }
+        
+        .info-icon { 
+            width: 16px; height: 16px; border-radius: 50%; background: #374151; color: #9ca3af; 
+            font-size: 10px; display: flex; align-items: center; justify-content: center; cursor: help; 
+        }
+        
+        /* Tooltip Text */
+        .info-icon:hover::after {
+            content: attr(data-tooltip);
+            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
+            background: #111827; color: white; padding: 8px 12px; border-radius: 6px;
+            font-size: 12px; width: 200px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border: 1px solid #374151; z-index: 100; pointer-events: none;
+        }
+
+        .kpi-num { font-size: 32px; font-weight: 700; color: white; letter-spacing: -1px; }
+        .kpi-sub { font-size: 13px; margin-top: 5px; color: #6b7280; font-weight: 500;}
+
+        /* SPLIT & INSIGHTS */
+        .dashboard-split { display: grid; grid-template-columns: 320px 1fr; gap: 24px; min-height: 500px; }
         .insights-card { background: #1f2937; border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; }
         .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         .insights-header svg { color: var(--accent-cyan); }
@@ -73,7 +88,7 @@
         .insight-text { font-size: 14px; line-height: 1.6; color: #d1d5db; }
         .insight-bold { font-weight: 700; color: white; }
 
-        /* CHART WRAPPER */
+        /* GRÁFICA */
         .chart-wrapper { background: var(--bg-card); border-radius: 16px; padding: 25px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
         .chart-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .chart-title { font-size: 16px; font-weight: 600; }
@@ -110,29 +125,44 @@
         <section id="n8n-view" class="view-section active-view">
             <div class="header">
                 <h1>Reporte de Consumo Enero</h1>
-                <div class="update-pill" id="last-update">Actualizado: --</div>
+                <div class="update-pill" id="last-update">Actualizando...</div>
             </div>
 
             <div class="kpi-grid">
                 <div class="kpi-card">
-                    <div class="kpi-title">Proyección Cierre Mes</div>
+                    <div class="kpi-header">
+                        <div class="kpi-title">Proyección Final</div>
+                        <div class="info-icon" data-tooltip="Consumo actual + estimación para fin de mes basada en tu promedio.">?</div>
+                    </div>
                     <div class="kpi-num" id="kpi-proj">--</div>
-                    <div class="kpi-sub">Total estimado ejecuciones</div>
+                    <div class="kpi-sub">Total estimado al día 31</div>
                 </div>
+                
                 <div class="kpi-card">
-                    <div class="kpi-title">Margen Disponible</div>
+                    <div class="kpi-header">
+                        <div class="kpi-title">Cupo Restante</div>
+                        <div class="info-icon" data-tooltip="Cantidad exacta de ejecuciones que puedes gastar antes de pagar extra.">?</div>
+                    </div>
                     <div class="kpi-num" id="kpi-buffer">--</div>
                     <div class="kpi-sub" id="kpi-buffer-txt">Calculando...</div>
                 </div>
+                
                 <div class="kpi-card">
-                    <div class="kpi-title">Utilización del Plan</div>
+                    <div class="kpi-header">
+                        <div class="kpi-title">Consumo del Plan</div>
+                        <div class="info-icon" data-tooltip="Porcentaje consumido del paquete contratado de 50k.">?</div>
+                    </div>
                     <div class="kpi-num" id="kpi-percent">--%</div>
-                    <div class="kpi-sub">Base 50.000 ejecuciones</div>
+                    <div class="kpi-sub">De 50.000 contratadas</div>
                 </div>
+                
                 <div class="kpi-card">
-                    <div class="kpi-title">Salud del Consumo</div>
+                    <div class="kpi-header">
+                        <div class="kpi-title">Estado de Riesgo</div>
+                        <div class="info-icon" data-tooltip="Compara tu velocidad de consumo vs la velocidad máxima segura.">?</div>
+                    </div>
                     <div class="kpi-num" id="kpi-health">--</div>
-                    <div class="kpi-sub">Promedio: <span id="kpi-daily">--</span>/día</div>
+                    <div class="kpi-sub" id="kpi-comparison">Calculando...</div>
                 </div>
             </div>
 
@@ -140,20 +170,17 @@
                 <div class="insights-card">
                     <div class="insights-header">
                         <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-                        <span>Executive Insights</span>
+                        <span>Análisis Automático</span>
                     </div>
-                    <div id="ai-content">
-                        Cargando análisis...
-                    </div>
+                    <div id="ai-content">Cargando...</div>
                 </div>
 
                 <div class="chart-wrapper">
                     <div class="chart-header">
-                        <div class="chart-title">Tendencia Diaria (Real)</div>
+                        <div class="chart-title">Comportamiento Diario (Detección de Picos)</div>
                         <div class="legend">
                             <div class="leg-item"><div class="dot" style="background:#3b82f6"></div>Total</div>
-                            <div class="leg-item"><div class="dot" style="background:#ef4444"></div>Fallidas</div>
-                            <div class="leg-item"><div class="dot" style="background:#10b981"></div>Exitosas</div>
+                            <div class="leg-item"><div class="dot" style="background:#ef4444"></div>Errores</div>
                         </div>
                     </div>
                     <div class="canvas-container">
@@ -182,25 +209,17 @@
 
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
         const PLAN_LIMIT = 50000;
+        const DAYS_IN_MONTH = 31; // Enero
 
         async function init() {
             try {
-                // Truco anti-caché
                 const res = await fetch(SHEET_URL + '&t=' + Date.now());
                 const txt = await res.text();
                 const parsed = Papa.parse(txt, { header: false }).data;
 
-                // --- DEBUG DE COLUMNAS (COORDENADAS FIJAS) ---
-                // Según tus capturas:
-                // Col A (0) = Fecha
-                // Col B (1) = Exitosas
-                // Col C (2) = Fallidas
-                // Col F (5) = Consumo final (Total a proyectar)
-                // Fila 4 (index 3) = Empiezan los datos (después de encabezados y selector)
+                // Fila fija 3 = Fila 4 de Excel
+                const START_ROW = 3; 
 
-                const START_ROW = 3; // Índice 3 es la fila 4 de excel
-
-                // Arrays
                 const labels = [];
                 const dTotal = [];
                 const dSuccess = [];
@@ -208,19 +227,14 @@
 
                 let sumTotal = 0;
 
-                // --- RECORRIDO ROBUSTO ---
                 for(let i = START_ROW; i < parsed.length; i++) {
                     const row = parsed[i];
-                    
-                    // Si la columna Fecha está vacía, saltamos
                     if(!row[0]) continue; 
 
-                    let dateStr = row[0]; // Columna A
-                    // Formato: "jueves, 1 de enero..." -> "01 Ene"
+                    let dateStr = row[0];
                     try {
                         if(dateStr.includes(',')) dateStr = dateStr.split(',')[1].trim();
-                        let parts = dateStr.split(' '); // ["1", "de", "enero"...]
-                        // Mapeo simple de meses
+                        let parts = dateStr.split(' ');
                         const mapMes = {'enero':'Ene','febrero':'Feb','marzo':'Mar','abril':'Abr','mayo':'May','junio':'Jun','julio':'Jul','agosto':'Ago','septiembre':'Sep','octubre':'Oct','noviembre':'Nov','diciembre':'Dic'};
                         if(parts.length >= 3) {
                             let day = parts[0].padStart(2, '0');
@@ -229,61 +243,52 @@
                         }
                     } catch(e) {}
 
-                    // Limpiador de números
-                    const clean = (val) => {
-                        if(!val) return 0;
-                        return parseInt(val.toString().replace(/\./g,'').replace(/,/g,'')) || 0;
-                    };
+                    const clean = (val) => parseInt((val||"0").toString().replace(/\./g,'').replace(/,/g,'')) || 0;
 
-                    // EXTRACCIÓN DIRECTA POR INDICE (SIN BUSCAR TEXTO)
                     let vSucc = clean(row[1]); // Col B
                     let vFail = clean(row[2]); // Col C
                     let vTotal = clean(row[5]); // Col F (Consumo final)
 
-                    // Solo agregamos si hay un dato en Total (Col F), para proyectar todo el mes
                     if(vTotal > 0 || vSucc > 0 || vFail > 0) {
                         labels.push(dateStr);
                         dTotal.push(vTotal);
                         dSuccess.push(vSucc);
                         dFail.push(vFail);
-
-                        sumTotal += vTotal; // Sumamos la columna F completa
+                        sumTotal += vTotal;
                     }
                 }
 
-                // Si por alguna razón sumTotal dio 0 (fallo de lectura), poner un log
-                if (sumTotal === 0) {
-                    console.error("ALERTA: No se leyeron datos. Verifica que el archivo esté publicado.");
-                    document.querySelector('.header h1').innerText = "Error: Sin Datos";
-                }
-
-                // CÁLCULOS
                 const buffer = PLAN_LIMIT - sumTotal;
                 const percent = (sumTotal / PLAN_LIMIT) * 100;
-                const daysWithData = dTotal.length || 1;
-                const avg = sumTotal / daysWithData; // Promedio simple sobre los días proyectados
                 
-                // RENDER KPIS
+                // LÓGICA DE SALUD MÁS CLARA
+                const avgReal = sumTotal / DAYS_IN_MONTH; // Promedio proyectado en el mes
+                const avgSafe = PLAN_LIMIT / DAYS_IN_MONTH; // 1612
+                
                 const fmt = new Intl.NumberFormat('es-CO');
                 document.getElementById('kpi-proj').innerText = fmt.format(sumTotal);
                 document.getElementById('kpi-buffer').innerText = fmt.format(buffer);
                 document.getElementById('kpi-buffer').className = 'kpi-num ' + (buffer > 0 ? 'txt-green' : 'txt-red');
-                document.getElementById('kpi-buffer-txt').innerText = buffer > 0 ? "Margen seguro" : "Límite excedido";
+                // Texto explicativo en lugar de "Margen Seguro"
+                document.getElementById('kpi-buffer-txt').innerText = buffer > 0 ? "Restantes antes del límite" : "Has excedido el plan";
+                
                 document.getElementById('kpi-percent').innerText = percent.toFixed(1) + '%';
                 
-                let status = "Óptimo", colorClass = "txt-green";
-                if(percent > 85) { status = "Precaución"; colorClass = "txt-warn"; }
-                if(percent > 100) { status = "Crítico"; colorClass = "txt-red"; }
+                // ESTADO DE RIESGO
+                let status = "Bajo Control", colorClass = "txt-green";
+                if(percent > 85) { status = "En Riesgo"; colorClass = "txt-warn"; }
+                if(percent > 100) { status = "Plan Excedido"; colorClass = "txt-red"; }
+                
                 document.getElementById('kpi-health').innerText = status;
                 document.getElementById('kpi-health').className = 'kpi-num ' + colorClass;
-                document.getElementById('kpi-daily').innerText = fmt.format(avg.toFixed(0));
+                
+                // EXPLICACIÓN DEL RIESGO EN ESPAÑOL CLARO
+                const comparisonHTML = `Tu consumo: <strong>${fmt.format(avgReal.toFixed(0))}</strong><span style="font-size:10px; color:#6b7280">/día</span> <br> Límite seguro: <strong>${fmt.format(avgSafe.toFixed(0))}</strong><span style="font-size:10px; color:#6b7280">/día</span>`;
+                document.getElementById('kpi-comparison').innerHTML = comparisonHTML;
                 
                 document.getElementById('last-update').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
-                // GENERAR INSIGHTS
                 generateInsights(percent, buffer);
-
-                // GRÁFICA
                 renderChart(labels, dTotal, dSuccess, dFail);
 
             } catch (err) { console.error(err); }
@@ -291,21 +296,19 @@
 
         function generateInsights(percent, buffer) {
             const fmt = new Intl.NumberFormat('es-CO');
-            let color = "#10b981"; 
-            let icon = "✓";
-            let title = "Rendimiento Óptimo.";
-            let desc = `El consumo está bajo control (${percent.toFixed(1)}%). Contamos con un margen saludable de ${fmt.format(buffer)} ejecuciones disponibles.`;
+            let color = "#10b981"; let icon = "✓"; let title = "Situación Estable.";
+            
+            // Texto redactado para que CUALQUIERA lo entienda
+            let desc = `Actualmente has usado el <span class="insight-bold">${percent.toFixed(1)}%</span> de tus 50.000 ejecuciones. A este ritmo, terminarás el mes sin problemas y te sobrarán aproximadamente ${fmt.format(buffer)} ejecuciones.`;
 
             if(percent > 100) {
-                title = "Crítico: Límite Excedido.";
-                desc = `Hemos superado el límite del plan por ${fmt.format(Math.abs(buffer))} ejecuciones. Se requiere acción inmediata.`;
+                title = "Alerta: Plan Agotado.";
+                desc = `Has superado el límite contratado en ${fmt.format(Math.abs(buffer))} ejecuciones. Es necesario contactar al proveedor para ampliar el plan o revisar errores en los flujos.`;
                 color = "#ef4444"; icon = "!";
             } else if (percent > 85) {
-                title = "Consumo Moderado-Alto.";
-                desc = `La operación es estable con una utilización del <span class="insight-bold">${percent.toFixed(1)}%</span>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad en los días restantes.`;
-                color = "#3b82f6"; icon = "i"; // Azul como pediste
-            } else {
-                color = "#10b981"; // Verde
+                title = "Precaución: Consumo Alto.";
+                desc = `Estás consumiendo más rápido de lo recomendado (${percent.toFixed(1)}% usado). Aunque aún tienes ${fmt.format(buffer)} disponibles, un pico de tráfico podría agotar el plan antes de fin de mes.`;
+                color = "#f59e0b"; icon = "i";
             }
 
             const html = `
@@ -322,14 +325,12 @@
 
         function renderChart(labels, total, succ, fail) {
             const ctx = document.getElementById('n8nChart').getContext('2d');
-            
             new Chart(ctx, {
                 type: 'line',
                 data: {
                     labels: labels,
                     datasets: [
                         { label: 'Total', data: total, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 6 },
-                        { label: 'Exitosas', data: succ, borderColor: '#10b981', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, borderDash: [5,5], pointRadius: 0 },
                         { label: 'Fallidas', data: fail, borderColor: '#ef4444', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 6 }
                     ]
                 },
