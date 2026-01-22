@@ -51,7 +51,7 @@
         .view-section.active-view { display: block; animation: fadeUp 0.5s ease; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* KPI CARDS CON TOOLTIPS */
+        /* KPIs */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 30px; }
         .kpi-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); position: relative; }
         
@@ -67,10 +67,10 @@
         /* Tooltip Text */
         .info-icon:hover::after {
             content: attr(data-tooltip);
-            position: absolute; top: -40px; left: 50%; transform: translateX(-50%);
-            background: #111827; color: white; padding: 8px 12px; border-radius: 6px;
-            font-size: 12px; width: 200px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
-            border: 1px solid #374151; z-index: 100; pointer-events: none;
+            position: absolute; top: -50px; left: 50%; transform: translateX(-50%);
+            background: #111827; color: white; padding: 10px 14px; border-radius: 6px;
+            font-size: 12px; width: 220px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+            border: 1px solid #374151; z-index: 100; pointer-events: none; line-height: 1.4;
         }
 
         .kpi-num { font-size: 32px; font-weight: 700; color: white; letter-spacing: -1px; }
@@ -125,23 +125,23 @@
         <section id="n8n-view" class="view-section active-view">
             <div class="header">
                 <h1>Reporte de Consumo Enero</h1>
-                <div class="update-pill" id="last-update">Actualizando...</div>
+                <div class="update-pill" id="last-update">Actualizado: --</div>
             </div>
 
             <div class="kpi-grid">
                 <div class="kpi-card">
                     <div class="kpi-header">
                         <div class="kpi-title">Proyección Final</div>
-                        <div class="info-icon" data-tooltip="Consumo actual + estimación para fin de mes basada en tu promedio.">?</div>
+                        <div class="info-icon" data-tooltip="Consumo actual + lo que estimamos que gastarás el resto del mes.">?</div>
                     </div>
                     <div class="kpi-num" id="kpi-proj">--</div>
-                    <div class="kpi-sub">Total estimado al día 31</div>
+                    <div class="kpi-sub">Ejecuciones totales estimadas</div>
                 </div>
                 
                 <div class="kpi-card">
                     <div class="kpi-header">
-                        <div class="kpi-title">Cupo Restante</div>
-                        <div class="info-icon" data-tooltip="Cantidad exacta de ejecuciones que puedes gastar antes de pagar extra.">?</div>
+                        <div class="kpi-title">Ejecuciones Disponibles</div>
+                        <div class="info-icon" data-tooltip="Es tu saldo a favor. Cantidad exacta de ejecuciones que puedes usar antes de pagar extra.">?</div>
                     </div>
                     <div class="kpi-num" id="kpi-buffer">--</div>
                     <div class="kpi-sub" id="kpi-buffer-txt">Calculando...</div>
@@ -150,7 +150,7 @@
                 <div class="kpi-card">
                     <div class="kpi-header">
                         <div class="kpi-title">Consumo del Plan</div>
-                        <div class="info-icon" data-tooltip="Porcentaje consumido del paquete contratado de 50k.">?</div>
+                        <div class="info-icon" data-tooltip="Porcentaje consumido del paquete contratado de 50.000.">?</div>
                     </div>
                     <div class="kpi-num" id="kpi-percent">--%</div>
                     <div class="kpi-sub">De 50.000 contratadas</div>
@@ -158,8 +158,8 @@
                 
                 <div class="kpi-card">
                     <div class="kpi-header">
-                        <div class="kpi-title">Estado de Riesgo</div>
-                        <div class="info-icon" data-tooltip="Compara tu velocidad de consumo vs la velocidad máxima segura.">?</div>
+                        <div class="kpi-title">Nivel de Riesgo</div>
+                        <div class="info-icon" data-tooltip="Indica si tu velocidad diaria de consumo es segura o peligrosa.">?</div>
                     </div>
                     <div class="kpi-num" id="kpi-health">--</div>
                     <div class="kpi-sub" id="kpi-comparison">Calculando...</div>
@@ -177,10 +177,11 @@
 
                 <div class="chart-wrapper">
                     <div class="chart-header">
-                        <div class="chart-title">Comportamiento Diario (Detección de Picos)</div>
+                        <div class="chart-title">Desglose Operativo</div>
                         <div class="legend">
                             <div class="leg-item"><div class="dot" style="background:#3b82f6"></div>Total</div>
-                            <div class="leg-item"><div class="dot" style="background:#ef4444"></div>Errores</div>
+                            <div class="leg-item"><div class="dot" style="background:#10b981"></div>Exitosas</div>
+                            <div class="leg-item"><div class="dot" style="background:#ef4444"></div>Fallidas</div>
                         </div>
                     </div>
                     <div class="canvas-container">
@@ -209,7 +210,7 @@
 
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
         const PLAN_LIMIT = 50000;
-        const DAYS_IN_MONTH = 31; // Enero
+        const DAYS_IN_MONTH = 31; 
 
         async function init() {
             try {
@@ -261,29 +262,25 @@
                 const buffer = PLAN_LIMIT - sumTotal;
                 const percent = (sumTotal / PLAN_LIMIT) * 100;
                 
-                // LÓGICA DE SALUD MÁS CLARA
-                const avgReal = sumTotal / DAYS_IN_MONTH; // Promedio proyectado en el mes
-                const avgSafe = PLAN_LIMIT / DAYS_IN_MONTH; // 1612
+                const avgReal = sumTotal / DAYS_IN_MONTH; 
+                const avgSafe = PLAN_LIMIT / DAYS_IN_MONTH; 
                 
                 const fmt = new Intl.NumberFormat('es-CO');
                 document.getElementById('kpi-proj').innerText = fmt.format(sumTotal);
                 document.getElementById('kpi-buffer').innerText = fmt.format(buffer);
                 document.getElementById('kpi-buffer').className = 'kpi-num ' + (buffer > 0 ? 'txt-green' : 'txt-red');
-                // Texto explicativo en lugar de "Margen Seguro"
-                document.getElementById('kpi-buffer-txt').innerText = buffer > 0 ? "Restantes antes del límite" : "Has excedido el plan";
+                document.getElementById('kpi-buffer-txt').innerText = buffer > 0 ? "Saldo a favor" : "Saldo negativo";
                 
                 document.getElementById('kpi-percent').innerText = percent.toFixed(1) + '%';
                 
-                // ESTADO DE RIESGO
                 let status = "Bajo Control", colorClass = "txt-green";
                 if(percent > 85) { status = "En Riesgo"; colorClass = "txt-warn"; }
-                if(percent > 100) { status = "Plan Excedido"; colorClass = "txt-red"; }
+                if(percent > 100) { status = "Excedido"; colorClass = "txt-red"; }
                 
                 document.getElementById('kpi-health').innerText = status;
                 document.getElementById('kpi-health').className = 'kpi-num ' + colorClass;
                 
-                // EXPLICACIÓN DEL RIESGO EN ESPAÑOL CLARO
-                const comparisonHTML = `Tu consumo: <strong>${fmt.format(avgReal.toFixed(0))}</strong><span style="font-size:10px; color:#6b7280">/día</span> <br> Límite seguro: <strong>${fmt.format(avgSafe.toFixed(0))}</strong><span style="font-size:10px; color:#6b7280">/día</span>`;
+                const comparisonHTML = `Consumo: <strong>${fmt.format(avgReal.toFixed(0))}</strong><span style="font-size:10px; color:#6b7280">/día</span> <br> Seguro: <strong>${fmt.format(avgSafe.toFixed(0))}</strong><span style="font-size:10px; color:#6b7280">/día</span>`;
                 document.getElementById('kpi-comparison').innerHTML = comparisonHTML;
                 
                 document.getElementById('last-update').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
@@ -298,8 +295,7 @@
             const fmt = new Intl.NumberFormat('es-CO');
             let color = "#10b981"; let icon = "✓"; let title = "Situación Estable.";
             
-            // Texto redactado para que CUALQUIERA lo entienda
-            let desc = `Actualmente has usado el <span class="insight-bold">${percent.toFixed(1)}%</span> de tus 50.000 ejecuciones. A este ritmo, terminarás el mes sin problemas y te sobrarán aproximadamente ${fmt.format(buffer)} ejecuciones.`;
+            let desc = `Actualmente has usado el <span class="insight-bold">${percent.toFixed(1)}%</span> de tus 50.000 ejecuciones. A este ritmo, terminarás el mes sin problemas y te sobrarán ${fmt.format(buffer)} ejecuciones disponibles (Saldo a favor).`;
 
             if(percent > 100) {
                 title = "Alerta: Plan Agotado.";
@@ -307,7 +303,7 @@
                 color = "#ef4444"; icon = "!";
             } else if (percent > 85) {
                 title = "Precaución: Consumo Alto.";
-                desc = `Estás consumiendo más rápido de lo recomendado (${percent.toFixed(1)}% usado). Aunque aún tienes ${fmt.format(buffer)} disponibles, un pico de tráfico podría agotar el plan antes de fin de mes.`;
+                desc = `Estás consumiendo más rápido de lo recomendado (${percent.toFixed(1)}% usado). Aunque aún tienes ${fmt.format(buffer)} ejecuciones disponibles, un pico de tráfico podría agotar el saldo.`;
                 color = "#f59e0b"; icon = "i";
             }
 
@@ -330,8 +326,38 @@
                 data: {
                     labels: labels,
                     datasets: [
-                        { label: 'Total', data: total, borderColor: '#3b82f6', backgroundColor: 'rgba(59, 130, 246, 0.1)', borderWidth: 2, tension: 0.3, fill: true, pointRadius: 0, pointHoverRadius: 6 },
-                        { label: 'Fallidas', data: fail, borderColor: '#ef4444', backgroundColor: 'transparent', borderWidth: 2, tension: 0.3, pointRadius: 0, pointHoverRadius: 6 }
+                        { 
+                            label: 'Total', 
+                            data: total, 
+                            borderColor: '#3b82f6', 
+                            backgroundColor: 'rgba(59, 130, 246, 0.1)', 
+                            borderWidth: 2, 
+                            tension: 0.3, 
+                            fill: true, 
+                            pointRadius: 0, 
+                            pointHoverRadius: 6 
+                        },
+                        { 
+                            label: 'Exitosas', 
+                            data: succ, 
+                            borderColor: '#10b981', 
+                            backgroundColor: 'transparent', 
+                            borderWidth: 2, 
+                            tension: 0.3, 
+                            borderDash: [5,5], // Línea punteada para diferenciar
+                            pointRadius: 0,
+                            pointHoverRadius: 6 
+                        },
+                        { 
+                            label: 'Fallidas', 
+                            data: fail, 
+                            borderColor: '#ef4444', 
+                            backgroundColor: 'transparent', 
+                            borderWidth: 2, 
+                            tension: 0.3, 
+                            pointRadius: 0, 
+                            pointHoverRadius: 6 
+                        }
                     ]
                 },
                 options: {
