@@ -61,13 +61,12 @@
         /* SPLIT LAYOUT */
         .dashboard-split { display: grid; grid-template-columns: 320px 1fr; gap: 24px; min-height: 500px; }
         
-        /* INSIGHTS (Diseño Solicitado) */
+        /* INSIGHTS */
         .insights-card { background: #1f2937; border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; }
         .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         .insights-header svg { color: var(--accent-cyan); }
         .insights-header span { font-size: 16px; font-weight: 600; color: var(--accent-cyan); }
         
-        .insight-highlight-box { margin-bottom: 15px; }
         .insight-status-line { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin-bottom: 15px; }
         .insight-icon-box { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color:white;}
         
@@ -191,6 +190,7 @@
                 const parsed = Papa.parse(txt, { header: false }).data;
 
                 // 1. BUSCAR ENCABEZADOS (Fila de "Exitosas", "Fallidas")
+                // En tu imagen, parece estar en la fila 3 (índice 2)
                 let headerRowIdx = parsed.findIndex(row => row.join(' ').toLowerCase().includes("exitosas"));
                 if(headerRowIdx === -1) headerRowIdx = 0;
 
@@ -200,8 +200,8 @@
                 const colFecha = 0; // A siempre es fecha
                 const colExitosas = headers.findIndex(h => h.includes("exitosas"));
                 const colFallidas = headers.findIndex(h => h.includes("fallidas"));
-                // Buscamos "Consumo final" o "Total diario"
-                const colTotal = headers.findIndex(h => h.includes("consumo final") || h.includes("total diario"));
+                // ¡CORRECCIÓN!: Buscamos "Consumo final" (Columna F) que es la que tiene los datos completos
+                const colTotal = headers.findIndex(h => h.includes("consumo final"));
 
                 // Arrays
                 const labels = [];
@@ -213,12 +213,11 @@
                 let sumSuccess = 0;
                 let sumFail = 0;
 
-                // 3. RECORRER
+                // 3. RECORRER (Sumando TODOS los días)
                 for(let i = headerRowIdx + 1; i < parsed.length; i++) {
                     const row = parsed[i];
                     if(!row[0]) continue;
 
-                    // Fecha Limpia
                     let dateStr = row[0];
                     try {
                         if(dateStr.includes(',')) dateStr = dateStr.split(',')[1].trim();
@@ -226,27 +225,23 @@
                         if(parts.length >= 3) dateStr = parts[0] + ' ' + parts[2].substring(0,3);
                     } catch(e) {}
 
-                    // Helper para limpiar
                     const clean = (val) => {
                         if(!val) return 0;
                         return parseInt(val.toString().replace(/\./g,'').replace(/,/g,'')) || 0;
                     };
 
-                    let vTotal = clean(row[colTotal]);
+                    let vTotal = clean(row[colTotal]); // Columna F (1.409...)
                     let vSucc = clean(row[colExitosas]);
                     let vFail = clean(row[colFallidas]);
 
-                    // LOGICA CLAVE: Si hay Total (ej 1.368) pero Succ/Fail son 0 (vacíos),
-                    // respetamos el Total para la línea azul, y dejamos Succ/Fail en 0.
-                    // Esto arregla el problema del 1 al 6 de enero.
-                    
+                    // Si hay dato en Columna F (Consumo final), lo guardamos aunque Exitosas sea 0
                     if(vTotal > 0 || vSucc > 0 || vFail > 0) {
                         labels.push(dateStr);
                         dTotal.push(vTotal);
                         dSuccess.push(vSucc);
                         dFail.push(vFail);
 
-                        sumTotal += vTotal;
+                        sumTotal += vTotal; // Sumamos la columna F completa para que de 43k
                         sumSuccess += vSucc;
                         sumFail += vFail;
                     }
@@ -275,7 +270,7 @@
                 
                 document.getElementById('last-update').innerText = "Actualizado: " + new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
 
-                // GENERAR INSIGHTS (Formato solicitado)
+                // GENERAR INSIGHTS
                 generateInsights(percent, buffer);
 
                 // GRÁFICA
@@ -287,22 +282,21 @@
         function generateInsights(percent, buffer) {
             const fmt = new Intl.NumberFormat('es-CO');
             let color = "#10b981"; 
-            let icon = "i";
-            let title = "Consumo Moderado-Alto.";
-            
-            // Texto dinámico basado en tu imagen de referencia
-            let desc = `La operación es estable con una utilización del <span class="insight-bold">${percent.toFixed(1)}%</span>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad en los días restantes.`;
+            let icon = "✓";
+            let title = "Rendimiento Óptimo.";
+            let desc = `El consumo está bajo control (${percent.toFixed(1)}%). Contamos con un margen saludable de ${fmt.format(buffer)} ejecuciones disponibles.`;
 
             if(percent > 100) {
                 title = "Crítico: Límite Excedido.";
                 desc = `Hemos superado el límite del plan por ${fmt.format(Math.abs(buffer))} ejecuciones. Se requiere acción inmediata.`;
                 color = "#ef4444"; icon = "!";
-            } else if (percent <= 85) {
-                title = "Rendimiento Óptimo.";
-                desc = `El consumo está bajo control (${percent.toFixed(1)}%). Contamos con un margen saludable de ${fmt.format(buffer)} ejecuciones disponibles.`;
-                color = "#10b981"; icon = "✓";
+            } else if (percent > 85) {
+                title = "Consumo Moderado-Alto.";
+                desc = `La operación es estable con una utilización del <span class="insight-bold">${percent.toFixed(1)}%</span>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad en los días restantes.`;
+                color = "#f59e0b"; icon = "i";
             } else {
-                color = "#3b82f6"; // Azul para moderado/alto como en tu imagen
+                color = "#3b82f6"; title = "Consumo Moderado-Alto."; // Azul si es intermedio (según tu imagen)
+                icon = "i";
             }
 
             const html = `
