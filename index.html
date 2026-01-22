@@ -11,6 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
+        /* ESTILOS EXACTOS DE LA VERSIÓN QUE TE GUSTÓ */
         :root {
             --bg-body: #0b1120;
             --bg-sidebar: #111827;
@@ -41,7 +42,7 @@
         .menu-icon img { width: 100%; height: 100%; filter: grayscale(100%) brightness(200%); }
         .menu-item.active .menu-icon img { filter: none; brightness: 0; invert: 1; }
 
-        /* MAIN */
+        /* MAIN CONTENT */
         .main-content { margin-left: 240px; padding: 40px 50px; width: 100%; max-width: 1400px; }
         .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 40px; }
         .header h1 { margin: 0; font-size: 26px; font-weight: 700; letter-spacing: -0.5px; }
@@ -51,17 +52,17 @@
         .view-section.active-view { display: block; animation: fadeUp 0.5s ease; }
         @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* KPIs */
+        /* KPI GRID */
         .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 24px; margin-bottom: 30px; }
         .kpi-card { background: var(--bg-card); padding: 24px; border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.2); }
         .kpi-title { font-size: 11px; font-weight: 600; color: #9ca3af; text-transform: uppercase; margin-bottom: 10px; }
         .kpi-num { font-size: 32px; font-weight: 700; color: white; letter-spacing: -1px; }
         .kpi-sub { font-size: 13px; margin-top: 5px; color: #6b7280; }
 
-        /* SPLIT LAYOUT */
+        /* DASHBOARD SPLIT */
         .dashboard-split { display: grid; grid-template-columns: 320px 1fr; gap: 24px; min-height: 500px; }
         
-        /* INSIGHTS */
+        /* INSIGHTS CARD (ESTILO CORRECTO) */
         .insights-card { background: #1f2937; border: 1px solid var(--border-color); border-radius: 16px; padding: 25px; display: flex; flex-direction: column; }
         .insights-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
         .insights-header svg { color: var(--accent-cyan); }
@@ -69,11 +70,10 @@
         
         .insight-status-line { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin-bottom: 15px; }
         .insight-icon-box { width: 20px; height: 20px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; color:white;}
-        
         .insight-text { font-size: 14px; line-height: 1.6; color: #d1d5db; }
         .insight-bold { font-weight: 700; color: white; }
 
-        /* GRÁFICA */
+        /* CHART WRAPPER */
         .chart-wrapper { background: var(--bg-card); border-radius: 16px; padding: 25px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
         .chart-header { display: flex; justify-content: space-between; margin-bottom: 20px; }
         .chart-title { font-size: 16px; font-weight: 600; }
@@ -185,23 +185,20 @@
 
         async function init() {
             try {
+                // Truco anti-caché
                 const res = await fetch(SHEET_URL + '&t=' + Date.now());
                 const txt = await res.text();
                 const parsed = Papa.parse(txt, { header: false }).data;
 
-                // 1. BUSCAR ENCABEZADOS (Fila de "Exitosas", "Fallidas")
-                // En tu imagen, parece estar en la fila 3 (índice 2)
-                let headerRowIdx = parsed.findIndex(row => row.join(' ').toLowerCase().includes("exitosas"));
-                if(headerRowIdx === -1) headerRowIdx = 0;
+                // --- DEBUG DE COLUMNAS (COORDENADAS FIJAS) ---
+                // Según tus capturas:
+                // Col A (0) = Fecha
+                // Col B (1) = Exitosas
+                // Col C (2) = Fallidas
+                // Col F (5) = Consumo final (Total a proyectar)
+                // Fila 4 (index 3) = Empiezan los datos (después de encabezados y selector)
 
-                const headers = parsed[headerRowIdx].map(h => h.toLowerCase().trim());
-                
-                // 2. COLUMNAS
-                const colFecha = 0; // A siempre es fecha
-                const colExitosas = headers.findIndex(h => h.includes("exitosas"));
-                const colFallidas = headers.findIndex(h => h.includes("fallidas"));
-                // ¡CORRECCIÓN!: Buscamos "Consumo final" (Columna F) que es la que tiene los datos completos
-                const colTotal = headers.findIndex(h => h.includes("consumo final"));
+                const START_ROW = 3; // Índice 3 es la fila 4 de excel
 
                 // Arrays
                 const labels = [];
@@ -210,48 +207,61 @@
                 const dFail = [];
 
                 let sumTotal = 0;
-                let sumSuccess = 0;
-                let sumFail = 0;
 
-                // 3. RECORRER (Sumando TODOS los días)
-                for(let i = headerRowIdx + 1; i < parsed.length; i++) {
+                // --- RECORRIDO ROBUSTO ---
+                for(let i = START_ROW; i < parsed.length; i++) {
                     const row = parsed[i];
-                    if(!row[0]) continue;
+                    
+                    // Si la columna Fecha está vacía, saltamos
+                    if(!row[0]) continue; 
 
-                    let dateStr = row[0];
+                    let dateStr = row[0]; // Columna A
+                    // Formato: "jueves, 1 de enero..." -> "01 Ene"
                     try {
                         if(dateStr.includes(',')) dateStr = dateStr.split(',')[1].trim();
-                        let parts = dateStr.split(' ');
-                        if(parts.length >= 3) dateStr = parts[0] + ' ' + parts[2].substring(0,3);
+                        let parts = dateStr.split(' '); // ["1", "de", "enero"...]
+                        // Mapeo simple de meses
+                        const mapMes = {'enero':'Ene','febrero':'Feb','marzo':'Mar','abril':'Abr','mayo':'May','junio':'Jun','julio':'Jul','agosto':'Ago','septiembre':'Sep','octubre':'Oct','noviembre':'Nov','diciembre':'Dic'};
+                        if(parts.length >= 3) {
+                            let day = parts[0].padStart(2, '0');
+                            let month = mapMes[parts[2].toLowerCase()] || parts[2].substring(0,3);
+                            dateStr = `${day} ${month}`;
+                        }
                     } catch(e) {}
 
+                    // Limpiador de números
                     const clean = (val) => {
                         if(!val) return 0;
                         return parseInt(val.toString().replace(/\./g,'').replace(/,/g,'')) || 0;
                     };
 
-                    let vTotal = clean(row[colTotal]); // Columna F (1.409...)
-                    let vSucc = clean(row[colExitosas]);
-                    let vFail = clean(row[colFallidas]);
+                    // EXTRACCIÓN DIRECTA POR INDICE (SIN BUSCAR TEXTO)
+                    let vSucc = clean(row[1]); // Col B
+                    let vFail = clean(row[2]); // Col C
+                    let vTotal = clean(row[5]); // Col F (Consumo final)
 
-                    // Si hay dato en Columna F (Consumo final), lo guardamos aunque Exitosas sea 0
+                    // Solo agregamos si hay un dato en Total (Col F), para proyectar todo el mes
                     if(vTotal > 0 || vSucc > 0 || vFail > 0) {
                         labels.push(dateStr);
                         dTotal.push(vTotal);
                         dSuccess.push(vSucc);
                         dFail.push(vFail);
 
-                        sumTotal += vTotal; // Sumamos la columna F completa para que de 43k
-                        sumSuccess += vSucc;
-                        sumFail += vFail;
+                        sumTotal += vTotal; // Sumamos la columna F completa
                     }
+                }
+
+                // Si por alguna razón sumTotal dio 0 (fallo de lectura), poner un log
+                if (sumTotal === 0) {
+                    console.error("ALERTA: No se leyeron datos. Verifica que el archivo esté publicado.");
+                    document.querySelector('.header h1').innerText = "Error: Sin Datos";
                 }
 
                 // CÁLCULOS
                 const buffer = PLAN_LIMIT - sumTotal;
                 const percent = (sumTotal / PLAN_LIMIT) * 100;
-                const days = dTotal.length || 1;
-                const avg = sumTotal / days;
+                const daysWithData = dTotal.length || 1;
+                const avg = sumTotal / daysWithData; // Promedio simple sobre los días proyectados
                 
                 // RENDER KPIS
                 const fmt = new Intl.NumberFormat('es-CO');
@@ -293,10 +303,9 @@
             } else if (percent > 85) {
                 title = "Consumo Moderado-Alto.";
                 desc = `La operación es estable con una utilización del <span class="insight-bold">${percent.toFixed(1)}%</span>. Se está optimizando la inversión, pero se debe vigilar no reducir el colchón de seguridad en los días restantes.`;
-                color = "#f59e0b"; icon = "i";
+                color = "#3b82f6"; icon = "i"; // Azul como pediste
             } else {
-                color = "#3b82f6"; title = "Consumo Moderado-Alto."; // Azul si es intermedio (según tu imagen)
-                icon = "i";
+                color = "#10b981"; // Verde
             }
 
             const html = `
