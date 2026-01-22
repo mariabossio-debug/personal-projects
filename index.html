@@ -8,7 +8,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
     <style>
         body {
-            background-color: #0f111a; /* Fondo oscuro elegante */
+            background-color: #0f111a;
             color: #ffffff;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             display: flex;
@@ -29,7 +29,6 @@
         h1 { margin: 0; font-size: 24px; font-weight: 500; color: #e2e8f0; }
         p { color: #a0aec0; margin: 5px 0 0 0; font-size: 14px; }
         
-        /* Grid de KPIs */
         .kpi-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -47,11 +46,10 @@
         .kpi-label { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
         .kpi-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f7fafc; }
         
-        .status-good { color: #48bb78; } /* Verde */
-        .status-warn { color: #ecc94b; } /* Amarillo */
-        .status-danger { color: #f56565; } /* Rojo */
+        .status-good { color: #48bb78; }
+        .status-warn { color: #ecc94b; }
+        .status-danger { color: #f56565; }
 
-        /* Contenedor de Gráfica */
         .chart-container {
             background-color: #1a202c;
             border-radius: 12px;
@@ -96,7 +94,7 @@
     </div>
 
     <script>
-        // TU ENLACE VINCULADO:
+        // TU ENLACE YA ESTÁ PUESTO AQUÍ:
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
         const PLAN_LIMIT = 50000;
 
@@ -105,114 +103,102 @@
                 const response = await fetch(SHEET_URL);
                 const csvText = await response.text();
                 
-                // Parsear CSV sin encabezados fijos para encontrar la fila correcta
                 const results = Papa.parse(csvText, { header: false });
                 const rawData = results.data;
 
-                // 1. Encontrar en qué fila están los títulos (buscamos "Consumo final" o "Fecha")
+                // Buscar encabezados
                 let headerIndex = -1;
                 for(let i=0; i<rawData.length; i++) {
-                    if(rawData[i].includes("Consumo final") || rawData[i].includes("Fecha")) {
+                    // Buscamos columnas clave
+                    if(rawData[i].join(' ').toLowerCase().includes("consumo final")) {
                         headerIndex = i;
                         break;
                     }
                 }
 
                 if(headerIndex === -1) {
-                    console.error("No encontré los encabezados 'Fecha' o 'Consumo final'");
-                    return;
+                    // Intento de fallback si no encuentra encabezados
+                    headerIndex = 0; 
                 }
 
-                // 2. Mapear columnas dinámicamente
-                const headers = rawData[headerIndex];
-                const colFecha = headers.findIndex(h => h && h.toLowerCase().includes("fecha corta")) !== -1 
-                               ? headers.findIndex(h => h && h.toLowerCase().includes("fecha corta")) // Preferimos fecha corta si existe
-                               : headers.findIndex(h => h && h.toLowerCase().includes("fecha"));      // Si no, la normal
+                const headers = rawData[headerIndex].map(h => h.toLowerCase());
                 
-                const colConsumo = headers.findIndex(h => h && h.toLowerCase().includes("consumo final"));
+                // Mapeo flexible de columnas
+                const colFecha = headers.findIndex(h => h.includes("fecha corta")) !== -1 
+                               ? headers.findIndex(h => h.includes("fecha corta")) 
+                               : headers.findIndex(h => h.includes("fecha"));      
+                
+                const colConsumo = headers.findIndex(h => h.includes("consumo final"));
 
-                // 3. Extraer datos limpios
                 const labels = [];
                 const dataPoints = [];
-                let lastValidValue = 0;
-
-                // Empezamos a leer DESPUÉS de la fila de encabezados
+                
+                // Leer datos
                 for(let i = headerIndex + 1; i < rawData.length; i++) {
                     const row = rawData[i];
-                    // Si la fila tiene datos válidos
                     if(row[colFecha] && row[colConsumo]) {
-                        // Limpiar fecha (si es larga "jueves 1...", tomamos algo corto si podemos, si no tal cual)
+                        // Limpiar fecha
                         let dateText = row[colFecha];
-                        // Intento básico de limpieza si viene texto largo
                         if(dateText.includes(",")) dateText = dateText.split(",")[1].trim(); 
-
-                        // Limpiar número (quitar puntos de mil)
+                        
+                        // Limpiar números
                         let valStr = row[colConsumo].toString().replace(/\./g, "").replace(/,/g, "");
                         let val = parseInt(valStr);
 
                         if(!isNaN(val)) {
                             labels.push(dateText);
                             dataPoints.push(val);
-                            lastValidValue = val;
                         }
                     }
                 }
 
-                // 4. Calcular KPIs
-                const projectedTotal = dataPoints[dataPoints.length - 1]; // El último valor es la proyección final
-                // Buscar el consumo "real" de hoy (aproximación: último valor que no sea igual al promedio repetido... 
-                // pero por simplicidad usaremos el total proyectado y colchón)
-                
+                // Cálculos
+                const projectedTotal = dataPoints[dataPoints.length - 1]; 
                 const buffer = PLAN_LIMIT - projectedTotal;
                 const percentage = (projectedTotal / PLAN_LIMIT) * 100;
 
-                // Actualizar HTML
+                // Renderizar KPIs
                 document.getElementById('kpi-proyeccion').innerText = projectedTotal.toLocaleString();
                 
                 const colchonEl = document.getElementById('kpi-colchon');
                 colchonEl.innerText = buffer.toLocaleString();
-                if(buffer < 0) colchonEl.classList.add('status-danger');
-                else colchonEl.classList.add('status-good');
+                colchonEl.className = buffer < 0 ? 'kpi-value status-danger' : 'kpi-value status-good';
 
-                document.getElementById('kpi-hoy').innerText = new Date().toLocaleDateString('es-ES', {day: 'numeric', month: 'short'}); // Fecha hoy
+                document.getElementById('kpi-hoy').innerText = new Date().toLocaleDateString('es-ES', {day: 'numeric', month: 'short'});
                 
                 const estadoEl = document.getElementById('kpi-estado');
                 estadoEl.innerText = percentage.toFixed(1) + "%";
-                if(percentage > 100) estadoEl.className = 'kpi-value status-danger';
-                else if(percentage > 85) estadoEl.className = 'kpi-value status-warn';
-                else estadoEl.className = 'kpi-value status-good';
+                if(percentage > 100) estadoEl.classList.add('status-danger');
+                else if(percentage > 85) estadoEl.classList.add('status-warn');
+                else estadoEl.classList.add('status-good');
 
-
-                // 5. Dibujar Gráfica
+                // Gráfica
                 const ctx = document.getElementById('mainChart').getContext('2d');
-                
-                // Degradado Azul SaaS
                 let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(66, 153, 225, 0.5)'); // Azul
-                gradient.addColorStop(1, 'rgba(66, 153, 225, 0)');   // Transparente
+                gradient.addColorStop(0, 'rgba(66, 153, 225, 0.5)');
+                gradient.addColorStop(1, 'rgba(66, 153, 225, 0)');
 
                 new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
                         datasets: [{
-                            label: 'Ejecuciones Acumuladas',
+                            label: 'Ejecuciones',
                             data: dataPoints,
-                            borderColor: '#4299e1', // Azul brillante
+                            borderColor: '#4299e1',
                             backgroundColor: gradient,
                             borderWidth: 3,
                             pointRadius: 0,
                             pointHoverRadius: 6,
-                            pointBackgroundColor: '#fff',
                             fill: true,
-                            tension: 0.4 // Curva suave
+                            tension: 0.4
                         },
                         {
-                            label: 'Límite Plan',
+                            label: 'Límite',
                             data: Array(labels.length).fill(PLAN_LIMIT),
-                            borderColor: '#f56565', // Rojo suave
+                            borderColor: '#f56565',
                             borderWidth: 2,
-                            borderDash: [5, 5], // Línea punteada
+                            borderDash: [5, 5],
                             pointRadius: 0,
                             fill: false
                         }]
@@ -220,46 +206,18 @@
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: {
-                            legend: { display: false },
-                            tooltip: {
-                                mode: 'index',
-                                intersect: false,
-                                backgroundColor: '#2d3748',
-                                titleColor: '#a0aec0',
-                                bodyFont: { size: 14, family: 'sans-serif' },
-                                padding: 12,
-                                cornerRadius: 8,
-                                displayColors: false,
-                                callbacks: {
-                                    label: function(context) {
-                                        return context.raw.toLocaleString() + ' ejecuciones';
-                                    }
-                                }
-                            }
-                        },
+                        plugins: { legend: { display: false } },
                         scales: {
-                            x: {
-                                grid: { display: false },
-                                ticks: { color: '#718096', maxTicksLimit: 12, maxRotation: 0 }
-                            },
-                            y: {
-                                grid: { color: '#2d3748', borderDash: [2, 4] },
-                                ticks: { color: '#718096' },
-                                beginAtZero: true
-                            }
+                            x: { grid: { display: false }, ticks: { color: '#718096', maxTicksLimit: 10 } },
+                            y: { grid: { color: '#2d3748' }, ticks: { color: '#718096' } }
                         },
-                        interaction: {
-                            mode: 'nearest',
-                            axis: 'x',
-                            intersect: false
-                        }
+                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
                     }
                 });
 
             } catch (error) {
-                console.error("Error cargando datos:", error);
-                document.querySelector('.header').innerHTML += `<p style="color:red">Error cargando datos: Verifica que el CSV esté publicado públicamente.</p>`;
+                console.error(error);
+                alert("Error cargando datos. Revisa la consola.");
             }
         }
 
