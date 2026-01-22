@@ -3,247 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Monitor de Consumo n8n</title>
+    <title>Executive Dashboard | Consumo 2026</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.0/papaparse.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-body: #0f172a;       /* Slate 900 */
+            --bg-card: #1e293b;       /* Slate 800 */
+            --text-main: #f8fafc;     /* Slate 50 */
+            --text-muted: #94a3b8;    /* Slate 400 */
+            --accent-color: #38bdf8;  /* Sky 400 */
+            --danger-color: #f87171;  /* Red 400 */
+            --success-color: #4ade80; /* Green 400 */
+            --border-color: #334155;  /* Slate 700 */
+        }
+
         body {
-            background-color: #0f111a;
-            color: #ffffff;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 40px 20px;
             display: flex;
             flex-direction: column;
             align-items: center;
-            padding: 40px 20px;
-            margin: 0;
+            min-height: 100vh;
         }
-        .container {
+
+        .dashboard-container {
             width: 100%;
-            max-width: 1100px;
+            max-width: 1200px;
         }
+
+        /* HEADER */
         .header {
-            margin-bottom: 30px;
-            border-bottom: 1px solid #2d3748;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
             padding-bottom: 20px;
         }
-        h1 { margin: 0; font-size: 24px; font-weight: 500; color: #e2e8f0; }
-        p { color: #a0aec0; margin: 5px 0 0 0; font-size: 14px; }
-        
+        .header h1 { margin: 0; font-size: 28px; font-weight: 600; letter-spacing: -0.5px; }
+        .header p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 14px; }
+        .last-update { font-size: 12px; color: var(--text-muted); background: var(--bg-card); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--border-color); }
+
+        /* KPI CARDS */
         .kpi-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
         }
-        .kpi-card {
-            background: #1a202c;
-            padding: 20px;
-            border-radius: 8px;
-            border: 1px solid #2d3748;
-            transition: transform 0.2s;
-        }
-        .kpi-card:hover { transform: translateY(-2px); border-color: #4a5568; }
-        .kpi-label { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
-        .kpi-value { font-size: 28px; font-weight: 700; margin-top: 8px; color: #f7fafc; }
         
-        .status-good { color: #48bb78; }
-        .status-warn { color: #ecc94b; }
-        .status-danger { color: #f56565; }
-
-        .chart-container {
-            background-color: #1a202c;
-            border-radius: 12px;
-            border: 1px solid #2d3748;
-            padding: 25px;
-            height: 450px;
-            position: relative;
+        .kpi-card {
+            background: var(--bg-card);
+            padding: 24px;
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
+        .kpi-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            border-color: var(--text-muted);
+        }
+        
+        /* Barrita decorativa arriba de la card */
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--accent-color), transparent);
+            opacity: 0.5;
+        }
+
+        .kpi-label { font-size: 12px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .kpi-value { font-size: 32px; font-weight: 700; color: var(--text-main); letter-spacing: -1px; }
+        .kpi-subtext { font-size: 13px; margin-top: 8px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+        .text-green { color: var(--success-color); }
+        .text-red { color: var(--danger-color); }
+        .text-blue { color: var(--accent-color); }
+
+        /* CHART SECTION */
+        .chart-wrapper {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            height: 500px;
+            position: relative;
+        }
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .chart-title { font-size: 16px; font-weight: 600; color: var(--text-main); }
+        .chart-legend { display: flex; gap: 15px; font-size: 12px; color: var(--text-muted); }
+        .legend-item { display: flex; align-items: center; gap: 6px; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
+
     </style>
 </head>
 <body>
 
-    <div class="container">
+    <div class="dashboard-container">
+        
         <div class="header">
-            <h1>Dashboard de Ejecuciones</h1>
-            <p>Monitoreo en tiempo real del consumo mensual</p>
+            <div>
+                <h1>Dashboard de Ejecuciones</h1>
+                <p>Reporte de consumo mensual automatizado</p>
+            </div>
+            <div class="last-update" id="update-time">Actualizando...</div>
         </div>
 
         <div class="kpi-grid">
             <div class="kpi-card">
-                <div class="kpi-label">Total Proyectado Mes</div>
-                <div class="kpi-value" id="kpi-proyeccion">Calculating...</div>
+                <div class="kpi-label">Proyección Fin de Mes</div>
+                <div class="kpi-value" id="kpi-proyeccion">--</div>
+                <div class="kpi-subtext">Total estimado de ejecuciones</div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-label">Cupo Disponible (Sobrante)</div>
+                <div class="kpi-label">Cupo Disponible</div>
                 <div class="kpi-value" id="kpi-colchon">--</div>
+                <div class="kpi-subtext" id="kpi-colchon-text">Calculando margen...</div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-label">Límite del Plan</div>
-                <div class="kpi-value" id="kpi-limite">50.000</div>
+                <div class="kpi-label">Utilización del Plan</div>
+                <div class="kpi-value" id="kpi-estado">--%</div>
+                <div class="kpi-subtext">Base 50.000 créditos</div>
             </div>
+
             <div class="kpi-card">
-                <div class="kpi-label">Estado del Cupo</div>
-                <div class="kpi-value" id="kpi-estado">--</div>
+                <div class="kpi-label">Estado Actual</div>
+                <div class="kpi-value" id="kpi-status-text" style="font-size: 24px;">--</div>
+                <div class="kpi-subtext">Nivel de riesgo</div>
             </div>
         </div>
 
-        <div class="chart-container">
+        <div class="chart-wrapper">
+            <div class="chart-header">
+                <div class="chart-title">Tendencia de Consumo Diario</div>
+                <div class="chart-legend">
+                    <div class="legend-item"><div class="dot" style="background: #38bdf8;"></div>Consumo Real</div>
+                    <div class="legend-item"><div class="dot" style="background: #f87171;"></div>Límite Teórico</div>
+                </div>
+            </div>
             <canvas id="mainChart"></canvas>
         </div>
+
     </div>
 
     <script>
-        // ENLACE CORREGIDO:
+        // CONFIGURACIÓN
         const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTLMaYZ05TFwfTXY186xPhb7MMz_4Ayu4K9XKXzetsCUwTyh8eUIcV-btgYhrC4c4ixUhjATgTMFms1/pub?gid=1663598334&single=true&output=csv';
         const PLAN_LIMIT = 50000;
 
-        async function init() {
+        async function initDashboard() {
             try {
-                const response = await fetch(SHEET_URL);
-                const csvText = await response.text();
+                // Cache Buster: Truco para forzar actualización inmediata
+                const uniqueUrl = SHEET_URL + '&t=' + new Date().getTime();
                 
+                const response = await fetch(uniqueUrl);
+                const csvText = await response.text();
                 const results = Papa.parse(csvText, { header: false });
                 const rawData = results.data;
 
-                // 1. Encontrar encabezados
+                // --- LÓGICA DE DATOS (Igual que antes, pero robusta) ---
                 let headerIndex = -1;
                 for(let i=0; i<rawData.length; i++) {
-                    // Buscamos la fila que tenga "Consumo final"
                     if(rawData[i].join(' ').toLowerCase().includes("consumo final")) {
-                        headerIndex = i;
-                        break;
+                        headerIndex = i; break;
                     }
                 }
-
-                if(headerIndex === -1) { headerIndex = 0; } // Fallback
+                if(headerIndex === -1) headerIndex = 0;
 
                 const headers = rawData[headerIndex].map(h => h.toLowerCase().trim());
-                
-                // 2. Identificar columnas
-                // Buscamos "fecha corta" primero, si no existe, usamos "fecha"
                 let colFecha = headers.findIndex(h => h.includes("fecha corta"));
                 if (colFecha === -1) colFecha = headers.findIndex(h => h.includes("fecha"));
-                
                 const colConsumo = headers.findIndex(h => h.includes("consumo final"));
 
                 const labels = [];
                 const dataPoints = [];
-                
-                // 3. Procesar datos y SUMAR
                 let monthlyTotalSum = 0;
 
                 for(let i = headerIndex + 1; i < rawData.length; i++) {
                     const row = rawData[i];
-                    // Validar que la fila tenga datos
                     if(row[colFecha] && row[colConsumo]) {
-                        
-                        // Limpieza de Fecha
                         let dateText = row[colFecha];
-                        if(dateText.includes(",")) {
-                            // Si viene como "jueves, 1 de enero...", tomamos la parte después de la coma
-                             let parts = dateText.split(",");
-                             if(parts.length > 1) dateText = parts[1].trim(); 
-                        }
-
-                        // Limpieza de Número (Quitar puntos de miles)
+                        if(dateText.includes(",")) { let p = dateText.split(","); if(p.length>1) dateText = p[1].trim(); }
+                        
                         let valStr = row[colConsumo].toString().replace(/\./g, "").replace(/,/g, "");
                         let val = parseInt(valStr);
 
                         if(!isNaN(val)) {
                             labels.push(dateText);
                             dataPoints.push(val);
-                            
-                            // AQUÍ ESTÁ LA CORRECCIÓN CLAVE: SUMAMOS CADA DÍA
-                            monthlyTotalSum += val;
+                            monthlyTotalSum += val; // Suma acumulada real
                         }
                     }
                 }
 
-                // 4. Cálculos Finales basados en la SUMA
+                // --- ACTUALIZAR KPIS ---
                 const buffer = PLAN_LIMIT - monthlyTotalSum;
-                const percentage = (monthlyTotalSum / PLAN_LIMIT) * 100;
+                const percent = (monthlyTotalSum / PLAN_LIMIT) * 100;
 
-                // 5. Actualizar HTML con los números correctos
+                // Formateador de números (pone puntos de mil)
+                const fmt = new Intl.NumberFormat('es-CO');
+
+                document.getElementById('kpi-proyeccion').innerText = fmt.format(monthlyTotalSum);
                 
-                // Proyección (Suma total)
-                document.getElementById('kpi-proyeccion').innerText = monthlyTotalSum.toLocaleString('es-CO');
-                
-                // Colchón
                 const colchonEl = document.getElementById('kpi-colchon');
-                colchonEl.innerText = buffer.toLocaleString('es-CO');
-                colchonEl.className = buffer < 0 ? 'kpi-value status-danger' : 'kpi-value status-good';
+                const colchonTxt = document.getElementById('kpi-colchon-text');
+                colchonEl.innerText = fmt.format(buffer);
+                
+                if(buffer > 0) {
+                    colchonEl.classList.add('text-green');
+                    colchonTxt.innerHTML = `<span class="text-green">●</span> Margen seguro`;
+                } else {
+                    colchonEl.classList.add('text-red');
+                    colchonTxt.innerHTML = `<span class="text-red">●</span> Sobrepasado`;
+                }
 
-                // Estado Porcentaje
                 const estadoEl = document.getElementById('kpi-estado');
-                estadoEl.innerText = percentage.toFixed(0) + "%"; // Sin decimales como en tu sheet
-                if(percentage > 100) estadoEl.className = 'kpi-value status-danger';
-                else if(percentage > 85) estadoEl.className = 'kpi-value status-warn';
-                else estadoEl.className = 'kpi-value status-good';
+                estadoEl.innerText = percent.toFixed(1) + "%";
+                if(percent > 100) estadoEl.style.color = 'var(--danger-color)';
+                else if(percent > 85) estadoEl.style.color = '#fbbf24'; // Amber
+                else estadoEl.style.color = 'var(--success-color)';
+
+                // Texto de Status
+                const statusText = document.getElementById('kpi-status-text');
+                if(percent <= 80) { statusText.innerText = "Óptimo"; statusText.className = "kpi-value text-green"; }
+                else if(percent <= 100) { statusText.innerText = "Precaución"; statusText.className = "kpi-value text-blue"; } // Azul/Amarillo
+                else { statusText.innerText = "Crítico"; statusText.className = "kpi-value text-red"; }
+
+                document.getElementById('update-time').innerText = "Actualizado: " + new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
 
 
-                // 6. Gráfica (Diaria)
+                // --- RENDERIZAR GRÁFICA PREMIUM ---
                 const ctx = document.getElementById('mainChart').getContext('2d');
+                
+                // Crear el degradado vertical bonito
                 let gradient = ctx.createLinearGradient(0, 0, 0, 400);
-                gradient.addColorStop(0, 'rgba(66, 153, 225, 0.5)');
-                gradient.addColorStop(1, 'rgba(66, 153, 225, 0)');
+                gradient.addColorStop(0, 'rgba(56, 189, 248, 0.5)'); // Azul brillante arriba
+                gradient.addColorStop(1, 'rgba(15, 23, 42, 0.0)');   // Transparente abajo
 
                 new Chart(ctx, {
                     type: 'line',
                     data: {
                         labels: labels,
-                        datasets: [{
-                            label: 'Consumo Diario',
-                            data: dataPoints,
-                            borderColor: '#4299e1',
-                            backgroundColor: gradient,
-                            borderWidth: 2,
-                            pointRadius: 0,
-                            pointHoverRadius: 6,
-                            fill: true,
-                            tension: 0.3
-                        },
-                        {
-                            label: 'Límite Diario Promedio (Ref)',
-                            // Línea de referencia visual (50k / 31 días = ~1612)
-                            data: Array(labels.length).fill(1612),
-                            borderColor: '#f56565',
-                            borderWidth: 1,
-                            borderDash: [5, 5],
-                            pointRadius: 0,
-                            fill: false
-                        }]
+                        datasets: [
+                            {
+                                label: 'Ejecuciones',
+                                data: dataPoints,
+                                borderColor: '#38bdf8', // Cyan brillante
+                                backgroundColor: gradient,
+                                borderWidth: 3,
+                                pointRadius: 0, // Sin puntos para limpieza visual
+                                pointHoverRadius: 6,
+                                pointBackgroundColor: '#fff',
+                                fill: true,
+                                tension: 0.4 // Curva suave (Smooth)
+                            },
+                            {
+                                label: 'Límite Diario Promedio',
+                                data: Array(labels.length).fill(1612), // Ref 50k/31
+                                borderColor: '#f87171', // Rojo suave
+                                borderWidth: 2,
+                                borderDash: [6, 6], // Punteado elegante
+                                pointRadius: 0,
+                                fill: false,
+                                tension: 0
+                            }
+                        ]
                     },
                     options: {
                         responsive: true,
                         maintainAspectRatio: false,
-                        plugins: { 
-                            legend: { display: false },
+                        plugins: {
+                            legend: { display: false }, // Ocultamos la leyenda default fea
                             tooltip: {
-                                mode: 'index',
-                                intersect: false,
+                                backgroundColor: '#1e293b',
+                                titleColor: '#94a3b8',
+                                bodyColor: '#f8fafc',
+                                borderColor: '#334155',
+                                borderWidth: 1,
+                                padding: 12,
+                                displayColors: false,
                                 callbacks: {
-                                    label: function(context) {
-                                        return context.raw.toLocaleString() + ' ejecuciones';
+                                    title: (context) => context[0].label,
+                                    label: (context) => {
+                                        return context.raw.toLocaleString('es-CO') + ' ejecuciones';
                                     }
                                 }
                             }
                         },
                         scales: {
-                            x: { grid: { display: false }, ticks: { color: '#718096', maxTicksLimit: 15 } },
-                            y: { grid: { color: '#2d3748' }, ticks: { color: '#718096' } }
+                            x: {
+                                grid: { display: false }, // Sin cuadrícula vertical
+                                ticks: { color: '#64748b', maxTicksLimit: 10, font: {family: 'Inter'} }
+                            },
+                            y: {
+                                grid: { 
+                                    color: '#334155', 
+                                    borderDash: [4, 4], // Cuadrícula horizontal punteada
+                                    drawBorder: false // Sin línea de eje sólida
+                                },
+                                ticks: { 
+                                    color: '#64748b', 
+                                    font: {family: 'Inter'},
+                                    callback: function(value) {
+                                        return value >= 1000 ? (value/1000) + 'k' : value; // Formato 1k, 2k...
+                                    }
+                                },
+                                beginAtZero: true
+                            }
                         },
-                        interaction: { mode: 'nearest', axis: 'x', intersect: false }
+                        interaction: {
+                            intersect: false,
+                            mode: 'index',
+                        }
                     }
                 });
 
             } catch (error) {
-                console.error("Error:", error);
-                document.getElementById('kpi-proyeccion').innerText = "Error";
+                console.error(error);
+                document.querySelector('.header p').innerText = "Error cargando datos. Verifica el CSV.";
+                document.querySelector('.header p').style.color = "var(--danger-color)";
             }
         }
 
-        init();
+        initDashboard();
     </script>
 </body>
 </html>
